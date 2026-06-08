@@ -1,0 +1,65 @@
+/* ========== 文字サイズ ==========
+   body に font- クラスを付与。DADS テキストクラスのみ上書きして
+   固定サイズのアイコンやレイアウト要素には触れない。         */
+body.font-large  [class*="text-std"] { font-size: 20px !important; }
+body.font-xlarge [class*="text-std"] { font-size: 24px !important; }
+
+/* ========== 背景色テーマ ==========
+   AppLayoutContent の wrapper div に bg-theme-* クラスを付与。
+   AccessibilityPanel は createPortal で body 直下に置くため
+   ここの * セレクターは届かず、パネルは常に通常表示になる。   */
+
+/* くろ */
+.bg-theme-black {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+.bg-theme-black *:not(svg):not(path):not(circle):not(line):not(polyline):not(rect):not(polygon) {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #666666 !important;
+}
+.bg-theme-black input,
+.bg-theme-black select,
+.bg-theme-black textarea {
+  background-color: #222222 !important;
+  border-color: #aaaaaa !important;
+}
+.bg-theme-black a { color: #88ccff !important; }
+
+/* きいろ */
+.bg-theme-yellow {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+}
+.bg-theme-yellow *:not(svg):not(path):not(circle):not(line):not(polyline):not(rect):not(polygon) {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+  border-color: #888800 !important;
+}
+.bg-theme-yellow input,
+.bg-theme-yellow select,
+.bg-theme-yellow textarea {
+  background-color: #ffffcc !important;
+}
+.bg-theme-yellow a { color: #000080 !important; }
+
+/* あお */
+.bg-theme-blue {
+  background-color: #003087 !important;
+  color: #ffffff !important;
+}
+.bg-theme-blue *:not(svg):not(path):not(circle):not(line):not(polyline):not(rect):not(polygon) {
+  background-color: #003087 !important;
+  color: #ffffff !important;
+  border-color: #6688cc !important;
+}
+.bg-theme-blue input,
+.bg-theme-blue select,
+.bg-theme-blue textarea {
+  background-color: #001a52 !important;
+}
+.bg-theme-blue a { color: #ffff00 !important; }
+
+/* ========== ふりがな ========== */
+ruby rt { font-size: 0.6em; line-height: 1; }
