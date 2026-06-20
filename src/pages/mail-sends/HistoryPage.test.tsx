@@ -72,7 +72,7 @@ describe('HistoryPage（送付履歴）', () => {
 
     await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
     expect(clickSpy).toHaveBeenCalled();
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url'));
 
     clickSpy.mockRestore();
     createObjectURL.mockRestore();

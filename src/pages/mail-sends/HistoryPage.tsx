@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getMailSends, exportMailSendsCsv } from '@/api/mailSends';
 import { getOffices } from '@/api/offices';
@@ -42,6 +42,11 @@ export const HistoryPage = () => {
   const [dateTo, setDateTo] = useState(`${CURRENT_YEAR}-${CURRENT_MONTH}`);
   const [officeId, setOfficeId] = useState('');
   const [userId, setUserId] = useState('');
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setExportError(null);
+  }, [dateFrom, dateTo, officeId, userId]);
 
   const { data: mailSends = [], isLoading } = useQuery({
     queryKey: ['mailSends', { dateFrom, dateTo, officeId, userId }],
@@ -59,6 +64,7 @@ export const HistoryPage = () => {
    * 現在のフィルタ条件で CSV をエクスポートしダウンロードする
    */
   const handleCsvExport = async () => {
+    setExportError(null);
     try {
       const blob = await exportMailSendsCsv({
         dateFrom: dateFrom || undefined,
@@ -70,9 +76,13 @@ export const HistoryPage = () => {
       const a = document.createElement('a');
       a.href = url;
       a.download = 'mail-sends.csv';
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
-    } catch { /* NOTE: エクスポート失敗は無視（サイレント） */ }
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    } catch {
+      setExportError('CSV出力に失敗しました。しばらく待ってからもう一度お試しください。');
+    }
   };
 
   const years = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(String);
@@ -86,6 +96,9 @@ export const HistoryPage = () => {
         <PageTitle>📋 送付履歴</PageTitle>
         <Button variant="outline" size="md" onClick={handleCsvExport}>CSV出力</Button>
       </div>
+      {exportError && (
+        <p role="alert" className="text-std-14N-130 text-error-red">{exportError}</p>
+      )}
 
       <div className="bg-white rounded-8 border border-solid-gray-200 p-4 flex flex-wrap gap-4">
         <div className="flex items-center gap-2">

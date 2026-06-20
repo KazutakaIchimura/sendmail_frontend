@@ -57,7 +57,7 @@ describe('UserForm（編集）', () => {
   test('編集に成功すると詳細画面へ遷移する', async () => {
     server.use(
       http.get('/api/users/:id', () => HttpResponse.json(userTanakaWithOffices)),
-      http.put('/api/users/:id', () => HttpResponse.json(userTanaka))
+      http.patch('/api/users/:id', () => HttpResponse.json(userTanaka))
     );
 
     const { user } = renderUserForm(`/users/${userTanakaWithOffices.id}/edit`);
