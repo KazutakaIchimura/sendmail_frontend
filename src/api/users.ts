@@ -17,7 +17,7 @@ export const createUser = (data: Omit<User, 'id' | 'isActive' | 'createdAt' | 'u
 /**
  * 利用者情報を更新する
  */
-export const updateUser = ({ id, data }: { id: number; data: Partial<User> }) =>
+export const updateUser = ({ id, data }: { id: number; data: Omit<Partial<User>, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> }) =>
   client.patch<User>(`/users/${id}`, data).then(r => r.data);
 
 export const getUserOffices = (userId: number) =>
