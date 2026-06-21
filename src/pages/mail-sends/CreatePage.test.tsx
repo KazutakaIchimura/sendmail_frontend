@@ -203,5 +203,8 @@ describe('CreatePage（送付物作成）', () => {
 
     expect(await screen.findByText('1件登録しました。残り1件は重複のため失敗しました。もう一度お試しください')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '1件を登録する' })).toBeInTheDocument();
+    expect(screen.getByText('前回失敗した1件のみを再送信します。内容をご確認ください。')).toBeInTheDocument();
+    expect(screen.getByText(officeB.name)).toBeInTheDocument();
+    expect(screen.queryByText(officeA.name)).not.toBeInTheDocument();
   });
 });
