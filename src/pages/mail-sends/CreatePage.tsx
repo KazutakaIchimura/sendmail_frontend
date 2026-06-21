@@ -10,6 +10,7 @@ import { PageTitle } from '@/components/ui/PageTitle';
 import { Furigana } from '@/components/ui/Furigana';
 import { Button } from '@/components/dads/Button/Button';
 import { Label } from '@/components/dads/Label/Label';
+import { Input } from '@/components/dads/Input/Input';
 import { Select } from '@/components/dads/Select/Select';
 import { Radio } from '@/components/dads/Radio/Radio';
 import { Checkbox } from '@/components/dads/Checkbox/Checkbox';
@@ -77,11 +78,15 @@ export const CreatePage = () => {
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [retryCombinations, setRetryCombinations] = useState<Combination[] | null>(null);
+  const [userSearch, setUserSearch] = useState('');
 
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
   const { data: offices = [] } = useQuery({ queryKey: ['offices'], queryFn: getOffices });
 
   const activeUsers = users.filter(u => u.isActive);
+  const visibleUsers = activeUsers.filter(u =>
+    u.name.includes(userSearch) || (u.nameKana?.includes(userSearch) ?? false)
+  );
   const activeOffices = offices.filter(o => o.isActive);
   const selectedUser = users.find(u => u.id === form.userId);
   const selectedOffices = activeOffices.filter(o => form.officeIds.includes(o.id));
@@ -173,8 +178,21 @@ export const CreatePage = () => {
       {step === 0 && (
         <div className="flex flex-col gap-4">
           <p className="text-std-14N-130 text-solid-gray-700">対象の利用者を選んでください<RequirementBadge>必須</RequirementBadge></p>
+          {activeUsers.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="user-search" size="sm">利用者名で絞り込み</Label>
+              <Input
+                id="user-search"
+                type="text"
+                blockSize="sm"
+                placeholder="氏名またはふりがなを入力"
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+              />
+            </div>
+          )}
           <ul className="bg-white border border-solid-gray-200 rounded-8 divide-y divide-solid-gray-100">
-            {activeUsers.map(u => (
+            {visibleUsers.map(u => (
               <li key={u.id}>
                 <label className={clsx(
                   'flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-solid-gray-50',
@@ -189,6 +207,9 @@ export const CreatePage = () => {
               </li>
             ))}
             {activeUsers.length === 0 && <li className="px-4 py-3 text-std-14N-130 text-solid-gray-500">登録されている利用者がいません</li>}
+            {activeUsers.length > 0 && visibleUsers.length === 0 && (
+              <li className="px-4 py-3 text-std-14N-130 text-solid-gray-500">「{userSearch}」に一致する利用者が見つかりません</li>
+            )}
           </ul>
           <div className="flex justify-between mt-2">
             <Button variant="outline" size="md" onClick={() => navigate('/')}>キャンセル</Button>

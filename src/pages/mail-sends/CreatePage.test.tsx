@@ -51,6 +51,28 @@ describe('CreatePage（送付物作成）', () => {
     expect(screen.getByRole('button', { name: '次へ →' })).toBeEnabled();
   });
 
+  test('STEP1: 利用者名で絞り込みできる', async () => {
+    const { user } = renderCreatePage();
+
+    expect(await screen.findByText(userTanaka.name)).toBeInTheDocument();
+    expect(screen.getByText(userYamada.name)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('利用者名で絞り込み'), '田中');
+
+    expect(screen.getByText(userTanaka.name)).toBeInTheDocument();
+    expect(screen.queryByText(userYamada.name)).not.toBeInTheDocument();
+  });
+
+  test('STEP1: 絞り込み結果が0件の場合は専用のメッセージが表示される', async () => {
+    const { user } = renderCreatePage();
+
+    await screen.findByText(userTanaka.name);
+    await user.type(screen.getByLabelText('利用者名で絞り込み'), '存在しない名前');
+
+    expect(await screen.findByText('「存在しない名前」に一致する利用者が見つかりません')).toBeInTheDocument();
+    expect(screen.queryByText(userTanaka.name)).not.toBeInTheDocument();
+  });
+
   test('STEP2: 全事業所が表示され、複数選択できる', async () => {
     const { user } = renderCreatePage();
     await goToOfficeStep(user);
