@@ -1,24 +1,20 @@
 import { describe, expect, test } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { Routes, Route, MemoryRouter } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, userEvent, createTestQueryClient, within } from '@/test/test-utils';
+import { Routes, Route } from 'react-router-dom';
+import { renderWithProviders, screen, waitFor, userEvent, within } from '@/test/test-utils';
 import { server } from '@/test/server';
-import { userTanaka, userYamada, inactiveUser } from '@/test/fixtures';
+import { userTanaka, userYamada, inactiveUser, adminStaff, staffMember } from '@/test/fixtures';
 import { UserListPage } from './UserListPage';
 
-const renderUserList = () => {
-  const client = createTestQueryClient();
-  const utils = render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={['/users']}>
-        <Routes>
-          <Route path="/users" element={<UserListPage />} />
-          <Route path="/users/new" element={<p>利用者登録画面</p>} />
-          <Route path="/users/:id" element={<p>利用者詳細画面</p>} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
+const renderUserList = (loggedInAs = adminStaff) => {
+  server.use(http.get('/api/auth/me', () => HttpResponse.json(loggedInAs)));
+  const utils = renderWithProviders(
+    <Routes>
+      <Route path="/users" element={<UserListPage />} />
+      <Route path="/users/new" element={<p>利用者登録画面</p>} />
+      <Route path="/users/:id" element={<p>利用者詳細画面</p>} />
+    </Routes>,
+    { route: '/users', withAuth: true }
   );
   return { ...utils, user: userEvent.setup() };
 };
@@ -100,5 +96,41 @@ describe('UserListPage', () => {
     await user.click(await screen.findByRole('button', { name: '➕ 新規登録' }));
 
     await waitFor(() => expect(screen.getByText('利用者登録画面')).toBeInTheDocument());
+  });
+
+  test('STAFFでログインした場合も利用者一覧が表示される', async () => {
+    server.use(http.get('/api/users', () => HttpResponse.json([userTanaka, userYamada])));
+
+    renderUserList(staffMember);
+
+    expect(await screen.findByText(userTanaka.name)).toBeInTheDocument();
+    expect(screen.getByText(userYamada.name)).toBeInTheDocument();
+  });
+
+  test('STAFFでログインした場合「すべて表示」の選択肢は表示されない', async () => {
+    server.use(http.get('/api/users', () => HttpResponse.json([userTanaka])));
+
+    renderUserList(staffMember);
+
+    await screen.findByText(userTanaka.name);
+    expect(screen.queryByText('すべて表示（無効含む）')).not.toBeInTheDocument();
+  });
+
+  test('ADMINが「すべて表示」を選択すると無効な利用者も含めて取得される', async () => {
+    server.use(
+      http.get('/api/users', ({ request }) => {
+        const includeInactive = new URL(request.url).searchParams.get('includeInactive') === 'true';
+        return HttpResponse.json(includeInactive ? [userTanaka, inactiveUser] : [userTanaka]);
+      })
+    );
+
+    const { user } = renderUserList(adminStaff);
+
+    expect(await screen.findByText(userTanaka.name)).toBeInTheDocument();
+    expect(screen.queryByText(inactiveUser.name)).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByDisplayValue('有効のみ'), 'すべて表示（無効含む）');
+
+    expect(await screen.findByText(inactiveUser.name)).toBeInTheDocument();
   });
 });
