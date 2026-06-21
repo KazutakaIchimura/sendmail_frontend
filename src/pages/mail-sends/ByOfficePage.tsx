@@ -16,8 +16,9 @@ export const ByOfficePage = () => {
   const statusFilter = searchParams.get('status') ?? '';
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [batchOpen, setBatchOpen] = useState(false);
+  const [clearedByFilter, setClearedByFilter] = useState(false);
 
-  const { data = [], isLoading, isError } = useQuery({
+  const { data = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['mailSendsByOffice', statusFilter],
     queryFn: () => getMailSendsByOffice(statusFilter || undefined),
   });
@@ -28,14 +29,17 @@ export const ByOfficePage = () => {
   const totalCount = data.reduce((acc, g) => acc + g.mailSends.length, 0);
 
   /** 送付物の選択状態をトグルする */
-  const toggleSelect = (id: number) =>
+  const toggleSelect = (id: number) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setClearedByFilter(false);
+  };
 
   /** 送付待ち全件の選択状態をトグルする */
   const toggleAll = () => {
     const allIds = allPendingMailSends.map(m => m.id);
     const allSelected = allIds.every(id => selectedIds.includes(id));
     setSelectedIds(allSelected ? [] : allIds);
+    setClearedByFilter(false);
   };
 
   const allSelected = allPendingMailSends.length > 0 && allPendingMailSends.every(m => selectedIds.includes(m.id));
@@ -56,7 +60,11 @@ export const ByOfficePage = () => {
             id="status-filter"
             blockSize="sm"
             value={statusFilter}
-            onChange={e => { setSearchParams(e.target.value ? { status: e.target.value } : {}); setSelectedIds([]); }}
+            onChange={e => {
+              setSearchParams(e.target.value ? { status: e.target.value } : {});
+              setClearedByFilter(selectedIds.length > 0);
+              setSelectedIds([]);
+            }}
           >
             <option value="">すべて</option>
             <option value="PENDING">送付待ち</option>
@@ -67,8 +75,19 @@ export const ByOfficePage = () => {
         <span className="text-std-14N-130 text-solid-gray-600">{totalCount}件</span>
       </div>
 
+      {clearedByFilter && (
+        <p className="text-std-14N-130 text-solid-gray-600" role="status">表示を切り替えたため、選択は解除されました</p>
+      )}
+
       {isLoading && <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>}
-      {isError && <p className="text-std-14N-130 text-red-600">データの取得に失敗しました</p>}
+      {isError && (
+        <div className="flex items-center gap-3">
+          <p className="text-std-14N-130 text-red-600" role="alert">データの取得に失敗しました</p>
+          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
+            {isFetching ? '再読み込み中...' : '再読み込み'}
+          </Button>
+        </div>
+      )}
 
       {!isLoading && data.length === 0 && (
         <p className="text-std-14N-130 text-solid-gray-500">該当する送付物はありません</p>
