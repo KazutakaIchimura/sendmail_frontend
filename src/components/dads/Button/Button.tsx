@@ -1,5 +1,5 @@
-﻿import { type ComponentProps, forwardRef } from 'react';
-import { Slot } from '..';
+import { type ComponentProps, forwardRef } from 'react';
+import { Slot } from '../Slot';
 
 export type ButtonVariant = 'solid-fill' | 'outline' | 'text';
 export type ButtonSize = 'lg' | 'md' | 'sm' | 'xs';
@@ -15,11 +15,11 @@ export const buttonVariantStyle: { [key in ButtonVariant]: string } = {
     border-4
     border-double
     border-transparent
-    bg-green-900
+    bg-key-900
     text-white
-    hover:bg-green-1000
+    hover:bg-key-1000
     hover:underline
-    active:bg-green-1200
+    active:bg-key-1200
     active:underline
     aria-disabled:bg-solid-gray-300
     aria-disabled:text-solid-gray-50
@@ -28,24 +28,24 @@ export const buttonVariantStyle: { [key in ButtonVariant]: string } = {
     border
     border-current
     bg-white
-    text-green-900
-    hover:bg-green-200
-    hover:text-green-1000
+    text-key-900
+    hover:bg-key-200
+    hover:text-key-1000
     hover:underline
-    active:bg-green-300
-    active:text-green-1200
+    active:bg-key-300
+    active:text-key-1200
     active:underline
     aria-disabled:bg-white
     aria-disabled:text-solid-gray-300
   `,
   text: `
-    text-green-900
+    text-key-900
     underline
-    hover:bg-green-50
-    hover:text-green-1000
+    hover:bg-key-50
+    hover:text-key-1000
     hover:decoration-[calc(3/16*1rem)]
-    active:bg-green-100
-    active:text-green-1200
+    active:bg-key-100
+    active:text-key-1200
     focus-visible:bg-yellow-300
     aria-disabled:bg-transparent
     aria-disabled:focus-visible:bg-yellow-300
