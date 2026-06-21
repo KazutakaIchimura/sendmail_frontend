@@ -43,12 +43,13 @@ export const HistoryPage = () => {
   const [officeId, setOfficeId] = useState('');
   const [userId, setUserId] = useState('');
   const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     setExportError(null);
   }, [dateFrom, dateTo, officeId, userId]);
 
-  const { data: mailSends = [], isLoading } = useQuery({
+  const { data: mailSends = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['mailSends', { dateFrom, dateTo, officeId, userId }],
     queryFn: () => getMailSends({
       dateFrom: dateFrom || undefined,
@@ -65,6 +66,7 @@ export const HistoryPage = () => {
    */
   const handleCsvExport = async () => {
     setExportError(null);
+    setIsExporting(true);
     try {
       const blob = await exportMailSendsCsv({
         dateFrom: dateFrom || undefined,
@@ -82,6 +84,8 @@ export const HistoryPage = () => {
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch {
       setExportError('CSV出力に失敗しました。しばらく待ってからもう一度お試しください。');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -94,7 +98,9 @@ export const HistoryPage = () => {
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <PageTitle>📋 送付履歴</PageTitle>
-        <Button variant="outline" size="md" onClick={handleCsvExport}>CSV出力</Button>
+        <Button variant="outline" size="md" disabled={isExporting} onClick={handleCsvExport}>
+          {isExporting ? '出力中...' : 'CSV出力'}
+        </Button>
       </div>
       {exportError && (
         <p role="alert" className="text-std-14N-130 text-error-red">{exportError}</p>
@@ -106,14 +112,17 @@ export const HistoryPage = () => {
           <Select id="from-year" blockSize="sm" value={dateFrom.slice(0, 4)} onChange={e => setDateFrom(`${e.target.value}-${dateFrom.slice(5)}`)}>
             {years.map(y => <option key={y} value={y}>{y}年</option>)}
           </Select>
-          <Select blockSize="sm" value={dateFrom.slice(5)} onChange={e => setDateFrom(`${dateFrom.slice(0, 4)}-${e.target.value}`)}>
+          <Label htmlFor="from-month" size="sm" className="sr-only">開始月</Label>
+          <Select id="from-month" blockSize="sm" value={dateFrom.slice(5)} onChange={e => setDateFrom(`${dateFrom.slice(0, 4)}-${e.target.value}`)}>
             {months.map(m => <option key={m} value={m}>{parseInt(m)}月</option>)}
           </Select>
           <span className="text-std-14N-130">〜</span>
-          <Select blockSize="sm" value={dateTo.slice(0, 4)} onChange={e => setDateTo(`${e.target.value}-${dateTo.slice(5)}`)}>
+          <Label htmlFor="to-year" size="sm" className="sr-only">終了年</Label>
+          <Select id="to-year" blockSize="sm" value={dateTo.slice(0, 4)} onChange={e => setDateTo(`${e.target.value}-${dateTo.slice(5)}`)}>
             {years.map(y => <option key={y} value={y}>{y}年</option>)}
           </Select>
-          <Select blockSize="sm" value={dateTo.slice(5)} onChange={e => setDateTo(`${dateTo.slice(0, 4)}-${e.target.value}`)}>
+          <Label htmlFor="to-month" size="sm" className="sr-only">終了月</Label>
+          <Select id="to-month" blockSize="sm" value={dateTo.slice(5)} onChange={e => setDateTo(`${dateTo.slice(0, 4)}-${e.target.value}`)}>
             {months.map(m => <option key={m} value={m}>{parseInt(m)}月</option>)}
           </Select>
         </div>
@@ -134,7 +143,15 @@ export const HistoryPage = () => {
       </div>
 
       {isLoading && <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>}
-      {!isLoading && mailSends.length === 0 && <p className="text-std-14N-130 text-solid-gray-500">該当する送付履歴はありません</p>}
+      {isError && (
+        <div className="flex items-center gap-3">
+          <p className="text-std-14N-130 text-red-600" role="alert">データの取得に失敗しました</p>
+          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
+            {isFetching ? '再読み込み中...' : '再読み込み'}
+          </Button>
+        </div>
+      )}
+      {!isLoading && !isError && mailSends.length === 0 && <p className="text-std-14N-130 text-solid-gray-500">該当する送付履歴はありません</p>}
 
       <div className="flex flex-col gap-4">
         {sentDates.map(date => {

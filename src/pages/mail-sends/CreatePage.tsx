@@ -91,6 +91,11 @@ export const CreatePage = () => {
     form.sendTypes.map(sendType => ({ officeId, sendType }))
   );
   const totalRecords = combinations.length;
+  const isRetrying = retryCombinations !== null;
+  const remainingOfficeNames = [...new Set(combinations.map(c => c.officeId))]
+    .map(id => offices.find(o => o.id === id)?.name)
+    .filter((name): name is string => Boolean(name));
+  const remainingSendTypes = [...new Set(combinations.map(c => c.sendType))];
 
   const years = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(String);
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -278,11 +283,16 @@ export const CreatePage = () => {
       {/* STEP 4: 確認 */}
       {step === 4 && (
         <div className="flex flex-col gap-4">
+          {isRetrying && (
+            <p className="text-std-14N-130 text-orange-700" role="status">
+              前回失敗した{totalRecords}件のみを再送信します。内容をご確認ください。
+            </p>
+          )}
           <div className="bg-white rounded-8 border border-solid-gray-200 divide-y divide-solid-gray-100">
             {[
               { label: '利用者', value: selectedUser?.name },
-              { label: '送付先事業所', value: selectedOffices.map(o => o.name).join('・') },
-              { label: '送付種別', value: form.sendTypes.map(t => SEND_TYPE_LABEL[t]).join('・') },
+              { label: '送付先事業所', value: isRetrying ? remainingOfficeNames.join('・') : selectedOffices.map(o => o.name).join('・') },
+              { label: '送付種別', value: isRetrying ? remainingSendTypes.map(t => SEND_TYPE_LABEL[t]).join('・') : form.sendTypes.map(t => SEND_TYPE_LABEL[t]).join('・') },
               { label: '送付予定月', value: `${form.sendYear}年${parseInt(form.sendMonth)}月` },
             ].map(({ label, value }) => (
               <div key={label} className="flex gap-4 px-4 py-3">
