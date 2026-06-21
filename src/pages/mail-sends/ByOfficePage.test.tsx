@@ -122,6 +122,39 @@ describe('ByOfficePage（送付先別一覧）', () => {
     await waitFor(() => expect(batchCalled).toBe(true));
   });
 
+  test('選択中にステータスを変更すると選択が解除され、その旨が通知される', async () => {
+    server.use(http.get('/api/mail-sends/by-office', () => HttpResponse.json(mailSendsByOffice)));
+
+    const { user } = renderByOffice();
+
+    const checkbox = await screen.findByRole('checkbox', { name: '田中 太郎 2026年6月 を選択' });
+    await user.click(checkbox);
+    expect(screen.getByRole('button', { name: /送付済みにする/ })).toBeEnabled();
+
+    await user.selectOptions(screen.getByLabelText('ステータス:'), 'PENDING');
+
+    expect(await screen.findByText('表示を切り替えたため、選択は解除されました')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /送付済みにする/ })).toBeDisabled();
+  });
+
+  test('データ取得に失敗した場合、再読み込みボタンで再取得できる', async () => {
+    let callCount = 0;
+    server.use(http.get('/api/mail-sends/by-office', () => {
+      callCount++;
+      if (callCount === 1) return HttpResponse.json({ message: 'error' }, { status: 500 });
+      return HttpResponse.json(mailSendsByOffice);
+    }));
+
+    const { user } = renderByOffice();
+
+    expect(await screen.findByText('データの取得に失敗しました')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '再読み込み' }));
+
+    await waitFor(() => expect(screen.queryByText('データの取得に失敗しました')).not.toBeInTheDocument());
+    expect(await screen.findByText(`🏢 ${officeA.name}`)).toBeInTheDocument();
+  });
+
   test('「送付物を新規登録」をクリックすると送付物作成画面へ遷移する', async () => {
     server.use(http.get('/api/mail-sends/by-office', () => HttpResponse.json(mailSendsByOffice)));
 
