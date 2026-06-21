@@ -155,4 +155,53 @@ describe('CreatePage（送付物作成）', () => {
 
     expect(await screen.findByText('しばらく待ってからもう一度お試しください')).toBeInTheDocument();
   });
+
+  test('事業所×送付種別の組み合わせの数だけ登録APIが呼ばれる', async () => {
+    let callCount = 0;
+    server.use(http.post('/api/mail-sends', () => {
+      callCount++;
+      return HttpResponse.json({});
+    }));
+
+    const { user } = renderCreatePage();
+    await goToOfficeStep(user);
+    await user.click(screen.getByRole('checkbox', { name: officeA.name }));
+    await user.click(screen.getByRole('checkbox', { name: officeB.name }));
+    await user.click(screen.getByRole('button', { name: '次へ →' }));
+    await user.click(screen.getByRole('checkbox', { name: /計画作成/ }));
+    await user.click(screen.getByRole('checkbox', { name: /モニタリング/ }));
+    await user.click(screen.getByRole('button', { name: '次へ →' }));
+    await user.click(screen.getByRole('button', { name: '確認画面へ →' }));
+
+    expect(screen.getByRole('button', { name: '4件を登録する' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '4件を登録する' }));
+
+    await waitFor(() => expect(callCount).toBe(4));
+  });
+
+  test('一部の組み合わせのみ失敗した場合、成功・失敗件数を表示し失敗分のみ再送信対象にする', async () => {
+    let callIndex = 0;
+    server.use(http.post('/api/mail-sends', () => {
+      callIndex++;
+      if (callIndex === 2) {
+        return HttpResponse.json({ message: 'duplicate' }, { status: 409 });
+      }
+      return HttpResponse.json({});
+    }));
+
+    const { user } = renderCreatePage();
+    await goToOfficeStep(user);
+    await user.click(screen.getByRole('checkbox', { name: officeA.name }));
+    await user.click(screen.getByRole('checkbox', { name: officeB.name }));
+    await user.click(screen.getByRole('button', { name: '次へ →' }));
+    await user.click(screen.getByRole('checkbox', { name: /計画作成/ }));
+    await user.click(screen.getByRole('button', { name: '次へ →' }));
+    await user.click(screen.getByRole('button', { name: '確認画面へ →' }));
+
+    await user.click(screen.getByRole('button', { name: '2件を登録する' }));
+
+    expect(await screen.findByText('1件登録しました。残り1件は重複のため失敗しました。もう一度お試しください')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1件を登録する' })).toBeInTheDocument();
+  });
 });

@@ -17,6 +17,8 @@ import { RequirementBadge } from '@/components/dads/RequirementBadge/Requirement
 
 type SendType = 'PLAN' | 'MONITORING';
 
+type Combination = { officeId: number; sendType: SendType };
+
 type FormData = {
   userId: number | null;
   officeIds: number[];
@@ -74,6 +76,7 @@ export const CreatePage = () => {
   });
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryCombinations, setRetryCombinations] = useState<Combination[] | null>(null);
 
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
   const { data: offices = [] } = useQuery({ queryKey: ['offices'], queryFn: getOffices });
@@ -83,7 +86,11 @@ export const CreatePage = () => {
   const selectedUser = users.find(u => u.id === form.userId);
   const selectedOffices = activeOffices.filter(o => form.officeIds.includes(o.id));
   const sendMonthValue = `${form.sendYear}-${form.sendMonth}-01`;
-  const totalRecords = form.officeIds.length * form.sendTypes.length;
+
+  const combinations = retryCombinations ?? form.officeIds.flatMap(officeId =>
+    form.sendTypes.map(sendType => ({ officeId, sendType }))
+  );
+  const totalRecords = combinations.length;
 
   const years = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(String);
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -107,35 +114,47 @@ export const CreatePage = () => {
   };
 
   /**
-   * 選択された事業所×送付種別の全組み合わせを一括で登録する。409 の場合は重複エラーを表示する
+   * 選択された事業所×送付種別の全組み合わせ（再送信時は前回失敗分のみ）を一括登録する。
+   * 一部のみ失敗した場合は成功分を確定させ、失敗分だけを再送信対象として残す
+   * （cartesian product のまま再送信すると成功済みの組み合わせが重複エラーになるため）。
    */
   const handleSubmit = async () => {
-    if (!form.userId || form.officeIds.length === 0 || form.sendTypes.length === 0) return;
+    if (!form.userId || combinations.length === 0) return;
     setIsSubmitting(true);
     setServerError('');
 
     const results = await Promise.allSettled(
-      form.officeIds.flatMap(officeId =>
-        form.sendTypes.map(sendType =>
-          createMailSend({ userId: form.userId!, officeId, sendType, sendMonth: sendMonthValue })
-        )
+      combinations.map(({ officeId, sendType }) =>
+        createMailSend({ userId: form.userId!, officeId, sendType, sendMonth: sendMonthValue })
       )
     );
 
     setIsSubmitting(false);
 
-    const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (failed.length === 0) {
+    const stillFailed = combinations.filter((_, i) => results[i].status === 'rejected');
+    const failedResults = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    const succeededCount = combinations.length - failedResults.length;
+
+    if (failedResults.length === 0) {
       queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'] });
       navigate('/mail-sends/by-office');
       return;
     }
 
-    const isDuplicate = failed.some(r => axios.isAxiosError(r.reason) && r.reason.response?.status === HTTP_STATUS_CONFLICT);
-    setServerError(isDuplicate
-      ? '同じ内容の送付物がすでに登録されています。内容をご確認ください'
-      : 'しばらく待ってからもう一度お試しください'
+    if (succeededCount > 0) {
+      queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'] });
+    }
+
+    const isDuplicate = failedResults.some(r => axios.isAxiosError(r.reason) && r.reason.response?.status === HTTP_STATUS_CONFLICT);
+    const reason = isDuplicate ? '重複のため' : 'エラーのため';
+    setServerError(
+      succeededCount > 0
+        ? `${succeededCount}件登録しました。残り${stillFailed.length}件は${reason}失敗しました。もう一度お試しください`
+        : isDuplicate
+          ? '同じ内容の送付物がすでに登録されています。内容をご確認ください'
+          : 'しばらく待ってからもう一度お試しください'
     );
+    setRetryCombinations(stillFailed);
   };
 
   return (
@@ -279,9 +298,9 @@ export const CreatePage = () => {
           )}
           {serverError && <p className="text-std-14N-130 text-red-600" role="alert">{serverError}</p>}
           <div className="flex justify-between mt-2">
-            <Button variant="outline" size="md" onClick={() => { setStep(3); setServerError(''); }}>← 戻る</Button>
+            <Button variant="outline" size="md" onClick={() => { setStep(3); setServerError(''); setRetryCombinations(null); }}>← 戻る</Button>
             <Button variant="solid-fill" size="md" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? '登録中...' : `${totalRecords}件を登録する`}
+              {isSubmitting ? `登録中...(${totalRecords}件)` : `${totalRecords}件を登録する`}
             </Button>
           </div>
         </div>
