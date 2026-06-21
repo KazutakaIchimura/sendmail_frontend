@@ -33,12 +33,31 @@ describe('DashboardPage', () => {
     expect(screen.getByText('読み込み中...')).toBeInTheDocument();
   });
 
-  test('取得に失敗した場合エラーメッセージが表示される', async () => {
+  test('取得に失敗した場合エラーメッセージと再読み込みボタンが表示される', async () => {
     server.use(http.get('/api/dashboard', () => new HttpResponse(null, { status: 500 })));
 
     renderWithProviders(<DashboardPage />);
 
-    expect(await screen.findByText('データの取得に失敗しました')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('データの取得に失敗しました');
+    expect(screen.getByRole('button', { name: '再読み込み' })).toBeInTheDocument();
+  });
+
+  test('再読み込みボタンをクリックすると再取得され、成功すればダッシュボードが表示される', async () => {
+    let callCount = 0;
+    server.use(http.get('/api/dashboard', () => {
+      callCount++;
+      if (callCount === 1) {
+        return new HttpResponse(null, { status: 500 });
+      }
+      return HttpResponse.json(dashboardData);
+    }));
+
+    renderWithProviders(<DashboardPage />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: '再読み込み' }));
+
+    await waitFor(() => expect(callCount).toBe(2));
+    expect(await screen.findByText('2026年6月')).toBeInTheDocument();
   });
 
   test('当月年月とサマリーカード（送付待ち・送付済み・期限切れ件数）が表示される', async () => {

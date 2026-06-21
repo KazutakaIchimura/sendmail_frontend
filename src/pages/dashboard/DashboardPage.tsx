@@ -18,13 +18,20 @@ const formatMonth = (ym: string | undefined | null) => {
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboard,
   });
 
   if (isLoading) return <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>;
-  if (isError || !data) return <p className="text-std-14N-130 text-red-600">データの取得に失敗しました</p>;
+  if (isError || !data) return (
+    <div className="flex items-center gap-3">
+      <p className="text-std-14N-130 text-red-600" role="alert">データの取得に失敗しました</p>
+      <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
+        {isFetching ? '再読み込み中...' : '再読み込み'}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
