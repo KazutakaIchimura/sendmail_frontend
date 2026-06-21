@@ -51,18 +51,20 @@ describe('CreatePage（送付物作成）', () => {
     expect(screen.getByRole('button', { name: '次へ →' })).toBeEnabled();
   });
 
-  test('STEP2: 選択した利用者に紐づく事業所のみが表示される', async () => {
-    server.use(
-      http.get('/api/users/:id/offices', ({ params }) =>
-        HttpResponse.json(Number(params.id) === userTanaka.id ? [officeA] : [officeB])
-      )
-    );
-
+  test('STEP2: 全事業所が表示され、複数選択できる', async () => {
     const { user } = renderCreatePage();
     await goToOfficeStep(user);
 
     expect(await screen.findByText(officeA.name)).toBeInTheDocument();
-    expect(screen.queryByText(officeB.name)).not.toBeInTheDocument();
+    expect(screen.getByText(officeB.name)).toBeInTheDocument();
+
+    const officeACheckbox = screen.getByRole('checkbox', { name: officeA.name });
+    const officeBCheckbox = screen.getByRole('checkbox', { name: officeB.name });
+    await user.click(officeACheckbox);
+    await user.click(officeBCheckbox);
+
+    expect(officeACheckbox).toBeChecked();
+    expect(officeBCheckbox).toBeChecked();
   });
 
   test('STEP2: 事業所を選択するまで「次へ」ボタンが無効になっている', async () => {
@@ -72,7 +74,7 @@ describe('CreatePage（送付物作成）', () => {
     expect(await screen.findByText(officeA.name)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '次へ →' })).toBeDisabled();
 
-    await user.click(screen.getByText(officeA.name));
+    await user.click(screen.getByRole('checkbox', { name: officeA.name }));
     expect(screen.getByRole('button', { name: '次へ →' })).toBeEnabled();
   });
 
