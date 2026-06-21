@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PageTitle } from '@/components/ui/PageTitle';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Button } from '@/components/dads/Button/Button';
+import { Label } from '@/components/dads/Label/Label';
 import { Select } from '@/components/dads/Select/Select';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import type { User } from '@/types/user';
@@ -55,15 +56,19 @@ export const UserListPage = () => {
       <div className="flex items-center gap-3">
         <SearchInput placeholder="氏名・ふりがなで検索..." value={search} onChange={setSearch} />
         {isAdmin && (
-          <Select
-            blockSize="sm"
-            className="w-auto"
-            value={includeInactive ? 'all' : 'active'}
-            onChange={e => setIncludeInactive(e.target.value === 'all')}
-          >
-            <option value="active">有効のみ</option>
-            <option value="all">すべて表示（無効含む）</option>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="filter-include-inactive" size="sm">表示</Label>
+            <Select
+              id="filter-include-inactive"
+              blockSize="sm"
+              className="w-auto"
+              value={includeInactive ? 'all' : 'active'}
+              onChange={e => setIncludeInactive(e.target.value === 'all')}
+            >
+              <option value="active">有効のみ</option>
+              <option value="all">すべて表示（無効含む）</option>
+            </Select>
+          </div>
         )}
       </div>
 
