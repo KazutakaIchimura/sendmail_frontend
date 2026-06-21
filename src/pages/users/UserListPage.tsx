@@ -2,22 +2,26 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getAllUsers, deleteUser, activateUser } from '@/api/users';
+import { getUsers, getAllUsers, deleteUser, activateUser } from '@/api/users';
+import { useAuth } from '@/contexts/AuthContext';
 import { PageTitle } from '@/components/ui/PageTitle';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Button } from '@/components/dads/Button/Button';
+import { Select } from '@/components/dads/Select/Select';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import type { User } from '@/types/user';
 
 export const UserListPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
+  const [includeInactive, setIncludeInactive] = useState(false);
   const [disablingUser, setDisablingUser] = useState<User | null>(null);
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users', 'all'],
-    queryFn: getAllUsers,
+  const { data: users = [], isLoading, isError } = useQuery({
+    queryKey: ['users', includeInactive],
+    queryFn: () => (includeInactive ? getAllUsers() : getUsers()),
   });
 
   const disableMutation = useMutation({
@@ -48,8 +52,22 @@ export const UserListPage = () => {
         </Button>
       </div>
 
-      <SearchInput placeholder="氏名・ふりがなで検索..." value={search} onChange={setSearch} />
+      <div className="flex items-center gap-3">
+        <SearchInput placeholder="氏名・ふりがなで検索..." value={search} onChange={setSearch} />
+        {isAdmin && (
+          <Select
+            blockSize="sm"
+            className="w-auto"
+            value={includeInactive ? 'all' : 'active'}
+            onChange={e => setIncludeInactive(e.target.value === 'all')}
+          >
+            <option value="active">有効のみ</option>
+            <option value="all">すべて表示（無効含む）</option>
+          </Select>
+        )}
+      </div>
 
+      {isError && <p className="text-std-14N-130 text-red-600" role="alert">利用者一覧の取得に失敗しました。しばらく待ってからもう一度お試しください</p>}
       {isLoading && <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>}
 
       <ul className="flex flex-col gap-2">
