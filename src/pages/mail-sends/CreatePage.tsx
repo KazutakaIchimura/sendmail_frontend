@@ -3,7 +3,8 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUsers, getUserOffices } from '@/api/users';
+import { getUsers } from '@/api/users';
+import { getOffices } from '@/api/offices';
 import { createMailSend } from '@/api/mailSends';
 import { PageTitle } from '@/components/ui/PageTitle';
 import { Furigana } from '@/components/ui/Furigana';
@@ -16,9 +17,11 @@ import { RequirementBadge } from '@/components/dads/RequirementBadge/Requirement
 
 type SendType = 'PLAN' | 'MONITORING';
 
+type Combination = { officeId: number; sendType: SendType };
+
 type FormData = {
   userId: number | null;
-  officeId: number | null;
+  officeIds: number[];
   sendTypes: SendType[];
   sendYear: string;
   sendMonth: string;
@@ -68,26 +71,38 @@ export const CreatePage = () => {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>({
-    userId: null, officeId: null, sendTypes: [],
+    userId: null, officeIds: [], sendTypes: [],
     sendYear: String(CURRENT_YEAR), sendMonth: CURRENT_MONTH,
   });
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryCombinations, setRetryCombinations] = useState<Combination[] | null>(null);
 
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
-  const { data: offices = [] } = useQuery({
-    queryKey: ['userOffices', form.userId],
-    queryFn: () => getUserOffices(form.userId!),
-    enabled: !!form.userId,
-  });
+  const { data: offices = [] } = useQuery({ queryKey: ['offices'], queryFn: getOffices });
 
   const activeUsers = users.filter(u => u.isActive);
+  const activeOffices = offices.filter(o => o.isActive);
   const selectedUser = users.find(u => u.id === form.userId);
-  const selectedOffice = offices.find(o => o.id === form.officeId);
+  const selectedOffices = activeOffices.filter(o => form.officeIds.includes(o.id));
   const sendMonthValue = `${form.sendYear}-${form.sendMonth}-01`;
+
+  const combinations = retryCombinations ?? form.officeIds.flatMap(officeId =>
+    form.sendTypes.map(sendType => ({ officeId, sendType }))
+  );
+  const totalRecords = combinations.length;
 
   const years = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(String);
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+
+  const toggleOffice = (officeId: number) => {
+    setForm(f => ({
+      ...f,
+      officeIds: f.officeIds.includes(officeId)
+        ? f.officeIds.filter(id => id !== officeId)
+        : [...f.officeIds, officeId],
+    }));
+  };
 
   const toggleSendType = (type: SendType) => {
     setForm(f => ({
@@ -99,33 +114,47 @@ export const CreatePage = () => {
   };
 
   /**
-   * 選択された送付種別を一括で登録する。409 の場合は重複エラーを表示する
+   * 選択された事業所×送付種別の全組み合わせ（再送信時は前回失敗分のみ）を一括登録する。
+   * 一部のみ失敗した場合は成功分を確定させ、失敗分だけを再送信対象として残す
+   * （cartesian product のまま再送信すると成功済みの組み合わせが重複エラーになるため）。
    */
   const handleSubmit = async () => {
-    if (!form.userId || !form.officeId || form.sendTypes.length === 0) return;
+    if (!form.userId || combinations.length === 0) return;
     setIsSubmitting(true);
     setServerError('');
 
     const results = await Promise.allSettled(
-      form.sendTypes.map(sendType =>
-        createMailSend({ userId: form.userId!, officeId: form.officeId!, sendType, sendMonth: sendMonthValue })
+      combinations.map(({ officeId, sendType }) =>
+        createMailSend({ userId: form.userId!, officeId, sendType, sendMonth: sendMonthValue })
       )
     );
 
     setIsSubmitting(false);
 
-    const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (failed.length === 0) {
+    const stillFailed = combinations.filter((_, i) => results[i].status === 'rejected');
+    const failedResults = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    const succeededCount = combinations.length - failedResults.length;
+
+    if (failedResults.length === 0) {
       queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'] });
       navigate('/mail-sends/by-office');
       return;
     }
 
-    const isDuplicate = failed.some(r => axios.isAxiosError(r.reason) && r.reason.response?.status === HTTP_STATUS_CONFLICT);
-    setServerError(isDuplicate
-      ? '同じ内容の送付物がすでに登録されています。内容をご確認ください'
-      : 'しばらく待ってからもう一度お試しください'
+    if (succeededCount > 0) {
+      queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'] });
+    }
+
+    const isDuplicate = failedResults.some(r => axios.isAxiosError(r.reason) && r.reason.response?.status === HTTP_STATUS_CONFLICT);
+    const reason = isDuplicate ? '重複のため' : 'エラーのため';
+    setServerError(
+      succeededCount > 0
+        ? `${succeededCount}件登録しました。残り${stillFailed.length}件は${reason}失敗しました。もう一度お試しください`
+        : isDuplicate
+          ? '同じ内容の送付物がすでに登録されています。内容をご確認ください'
+          : 'しばらく待ってからもう一度お試しください'
     );
+    setRetryCombinations(stillFailed);
   };
 
   return (
@@ -146,7 +175,7 @@ export const CreatePage = () => {
                   'flex items-center gap-3 px-4 py-4 cursor-pointer hover:bg-solid-gray-50',
                   form.userId === u.id && 'bg-green-50'
                 )}>
-                  <Radio name="userId" value={String(u.id)} checked={form.userId === u.id} onChange={() => setForm(f => ({ ...f, userId: u.id, officeId: null }))} />
+                  <Radio name="userId" value={String(u.id)} checked={form.userId === u.id} onChange={() => setForm(f => ({ ...f, userId: u.id, officeIds: [] }))} />
                   <div>
                     <span className="text-std-16N-170 text-solid-gray-900">{u.name}</span>
                     {u.nameKana && <span className="text-std-14N-130 text-solid-gray-500 ml-2">{u.nameKana}</span>}
@@ -169,25 +198,25 @@ export const CreatePage = () => {
           <p className="text-std-14N-130 text-solid-gray-600">利用者: <strong>{selectedUser?.name}</strong></p>
           <div className="flex flex-col gap-1">
             <Label>送付先事業所<RequirementBadge>必須</RequirementBadge></Label>
-            <p className="text-std-14N-130 text-solid-gray-500">※ 利用者を選ぶと候補が絞られます</p>
+            <p className="text-std-14N-130 text-solid-gray-500">複数選択できます</p>
           </div>
           <ul className="bg-white border border-solid-gray-200 rounded-8 divide-y divide-solid-gray-100">
-            {offices.map(o => (
+            {activeOffices.map(o => (
               <li key={o.id}>
                 <label className={clsx(
                   'flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-solid-gray-50',
-                  form.officeId === o.id && 'bg-green-50'
+                  form.officeIds.includes(o.id) && 'bg-green-50'
                 )}>
-                  <Radio name="officeId" value={String(o.id)} checked={form.officeId === o.id} onChange={() => setForm(f => ({ ...f, officeId: o.id }))} />
+                  <Checkbox checked={form.officeIds.includes(o.id)} onChange={() => toggleOffice(o.id)} />
                   <span className="text-std-14N-130 text-solid-gray-900">{o.name}</span>
                 </label>
               </li>
             ))}
-            {offices.length === 0 && <li className="px-4 py-3 text-std-14N-130 text-solid-gray-500">紐付き事業所がありません</li>}
+            {activeOffices.length === 0 && <li className="px-4 py-3 text-std-14N-130 text-solid-gray-500">登録されている事業所がありません</li>}
           </ul>
           <div className="flex justify-between mt-2">
             <Button variant="outline" size="md" onClick={() => setStep(0)}>← 戻る</Button>
-            <Button variant="solid-fill" size="md" disabled={!form.officeId} onClick={() => setStep(2)}>次へ →</Button>
+            <Button variant="solid-fill" size="md" disabled={form.officeIds.length === 0} onClick={() => setStep(2)}>次へ →</Button>
           </div>
         </div>
       )}
@@ -252,7 +281,7 @@ export const CreatePage = () => {
           <div className="bg-white rounded-8 border border-solid-gray-200 divide-y divide-solid-gray-100">
             {[
               { label: '利用者', value: selectedUser?.name },
-              { label: '送付先事業所', value: selectedOffice?.name },
+              { label: '送付先事業所', value: selectedOffices.map(o => o.name).join('・') },
               { label: '送付種別', value: form.sendTypes.map(t => SEND_TYPE_LABEL[t]).join('・') },
               { label: '送付予定月', value: `${form.sendYear}年${parseInt(form.sendMonth)}月` },
             ].map(({ label, value }) => (
@@ -262,16 +291,16 @@ export const CreatePage = () => {
               </div>
             ))}
           </div>
-          {form.sendTypes.length === 2 && (
+          {totalRecords > 1 && (
             <p className="text-std-14N-130 text-solid-gray-600">
-              計画作成・モニタリングの2件を一括登録します。
+              事業所×送付種別の組み合わせで{totalRecords}件を一括登録します。
             </p>
           )}
           {serverError && <p className="text-std-14N-130 text-red-600" role="alert">{serverError}</p>}
           <div className="flex justify-between mt-2">
-            <Button variant="outline" size="md" onClick={() => { setStep(3); setServerError(''); }}>← 戻る</Button>
+            <Button variant="outline" size="md" onClick={() => { setStep(3); setServerError(''); setRetryCombinations(null); }}>← 戻る</Button>
             <Button variant="solid-fill" size="md" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? '登録中...' : `${form.sendTypes.length}件を登録する`}
+              {isSubmitting ? `登録中...(${totalRecords}件)` : `${totalRecords}件を登録する`}
             </Button>
           </div>
         </div>

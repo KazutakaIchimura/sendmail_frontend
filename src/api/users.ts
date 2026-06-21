@@ -1,6 +1,5 @@
 import { client } from './client';
 import type { User, UserWithOffices } from '@/types/user';
-import type { Office } from '@/types/office';
 
 export const getUsers = () =>
   client.get<User[]>('/users').then(r => r.data);
@@ -19,9 +18,6 @@ export const createUser = (data: Omit<User, 'id' | 'isActive' | 'createdAt' | 'u
  */
 export const updateUser = ({ id, data }: { id: number; data: Omit<Partial<User>, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> }) =>
   client.patch<User>(`/users/${id}`, data).then(r => r.data);
-
-export const getUserOffices = (userId: number) =>
-  client.get<Office[]>(`/users/${userId}/offices`).then(r => r.data);
 
 /**
  * 利用者に事業所を紐付ける
