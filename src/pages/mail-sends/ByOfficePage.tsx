@@ -18,7 +18,7 @@ export const ByOfficePage = () => {
   const [batchOpen, setBatchOpen] = useState(false);
   const [clearedByFilter, setClearedByFilter] = useState(false);
 
-  const { data = [], isLoading, isError, refetch } = useQuery({
+  const { data = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['mailSendsByOffice', statusFilter],
     queryFn: () => getMailSendsByOffice(statusFilter || undefined),
   });
@@ -62,7 +62,7 @@ export const ByOfficePage = () => {
             value={statusFilter}
             onChange={e => {
               setSearchParams(e.target.value ? { status: e.target.value } : {});
-              if (selectedIds.length > 0) setClearedByFilter(true);
+              setClearedByFilter(selectedIds.length > 0);
               setSelectedIds([]);
             }}
           >
@@ -83,7 +83,9 @@ export const ByOfficePage = () => {
       {isError && (
         <div className="flex items-center gap-3">
           <p className="text-std-14N-130 text-red-600" role="alert">データの取得に失敗しました</p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>再読み込み</Button>
+          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
+            {isFetching ? '再読み込み中...' : '再読み込み'}
+          </Button>
         </div>
       )}
 

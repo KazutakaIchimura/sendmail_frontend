@@ -137,6 +137,32 @@ describe('ByOfficePage（送付先別一覧）', () => {
     expect(screen.getByRole('button', { name: /送付済みにする/ })).toBeDisabled();
   });
 
+  test('選択がない状態でステータスを変更しても、選択解除の通知は表示されない', async () => {
+    server.use(http.get('/api/mail-sends/by-office', () => HttpResponse.json(mailSendsByOffice)));
+
+    const { user } = renderByOffice();
+    await screen.findByText(`🏢 ${officeA.name}`);
+
+    await user.selectOptions(screen.getByLabelText('ステータス:'), 'PENDING');
+
+    expect(screen.queryByText('表示を切り替えたため、選択は解除されました')).not.toBeInTheDocument();
+  });
+
+  test('選択中に通知が表示された後、選択なしで再度フィルタを変更すると通知が消える', async () => {
+    server.use(http.get('/api/mail-sends/by-office', () => HttpResponse.json(mailSendsByOffice)));
+
+    const { user } = renderByOffice();
+
+    const checkbox = await screen.findByRole('checkbox', { name: '田中 太郎 2026年6月 を選択' });
+    await user.click(checkbox);
+    await user.selectOptions(screen.getByLabelText('ステータス:'), 'PENDING');
+    expect(await screen.findByText('表示を切り替えたため、選択は解除されました')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('ステータス:'), 'SENT');
+
+    expect(screen.queryByText('表示を切り替えたため、選択は解除されました')).not.toBeInTheDocument();
+  });
+
   test('データ取得に失敗した場合、再読み込みボタンで再取得できる', async () => {
     let callCount = 0;
     server.use(http.get('/api/mail-sends/by-office', () => {
@@ -153,6 +179,7 @@ describe('ByOfficePage（送付先別一覧）', () => {
 
     await waitFor(() => expect(screen.queryByText('データの取得に失敗しました')).not.toBeInTheDocument());
     expect(await screen.findByText(`🏢 ${officeA.name}`)).toBeInTheDocument();
+    expect(callCount).toBe(2);
   });
 
   test('「送付物を新規登録」をクリックすると送付物作成画面へ遷移する', async () => {
