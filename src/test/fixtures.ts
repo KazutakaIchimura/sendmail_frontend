@@ -72,6 +72,17 @@ export const inactiveOffice: Office = {
   isActive: false,
 };
 
+/** userTanakaWithOffices（[officeA, officeB]）には紐付いていない、追加可能な事業所 */
+export const officeD: Office = {
+  id: 13,
+  name: '事業所D 自立訓練センター',
+  postalCode: '321-0987',
+  address: '千葉県□□市1-1-1',
+  building: null,
+  phone: '043-5555-6666',
+  isActive: true,
+};
+
 export const userTanaka: User = {
   id: 100,
   name: '田中 太郎',

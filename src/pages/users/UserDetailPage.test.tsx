@@ -4,7 +4,7 @@ import { Routes, Route, MemoryRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, userEvent, createTestQueryClient, within } from '@/test/test-utils';
 import { server } from '@/test/server';
-import { userTanakaWithOffices, inactiveUser, officeA, officeB, mailSendPending } from '@/test/fixtures';
+import { userTanakaWithOffices, inactiveUser, officeA, officeB, officeD, mailSendPending } from '@/test/fixtures';
 import { UserDetailPage } from './UserDetailPage';
 
 const renderUserDetail = (id = userTanakaWithOffices.id) => {
@@ -95,6 +95,32 @@ describe('UserDetailPage', () => {
     await user.click(within(dialog).getByRole('button', { name: '解除する' }));
 
     await waitFor(() => expect(removeCalled).toBe(true));
+  });
+
+  test('「事業所を追加」から未紐付けの事業所を選んで追加できる（紐付け済みの事業所は選択肢に出ない）', async () => {
+    let addRequestBody: unknown = null;
+    server.use(
+      http.get('/api/users/:id', () => HttpResponse.json(userTanakaWithOffices)),
+      http.get('/api/mail-sends', () => HttpResponse.json([])),
+      http.get('/api/offices', () => HttpResponse.json([officeA, officeB, officeD])),
+      http.post('/api/users/:id/offices', async ({ request }) => {
+        addRequestBody = await request.json();
+        return HttpResponse.json({});
+      })
+    );
+
+    const { user } = renderUserDetail();
+
+    await user.click(await screen.findByRole('button', { name: '＋ 事業所を追加' }));
+    const dialog = await screen.findByRole('dialog');
+
+    expect(within(dialog).queryByText(officeA.name)).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(officeB.name)).not.toBeInTheDocument();
+
+    await user.click(within(dialog).getByText(officeD.name));
+    await user.click(within(dialog).getByRole('button', { name: '追加する' }));
+
+    await waitFor(() => expect(addRequestBody).toEqual({ officeId: officeD.id }));
   });
 
   test('最近の送付履歴が表示される', async () => {

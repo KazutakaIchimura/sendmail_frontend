@@ -15,6 +15,10 @@ export const OfficeListPage = () => {
   const [search, setSearch] = useState('');
   const [disablingOffice, setDisablingOffice] = useState<Office | null>(null);
 
+  // 有効のみを返すgetOffices()のキャッシュ（['offices']を使う他画面）と
+  // 無効も含めて返すgetAllOffices()のキャッシュが衝突しないよう、別キーにしている。
+  // invalidateQueries({queryKey:['offices']})はprefixマッチでこちらも対象に含むため、
+  // 他画面からの無効化は引き続き効く。
   const { data: offices = [], isLoading } = useQuery({
     queryKey: ['offices', 'all'],
     queryFn: getAllOffices,

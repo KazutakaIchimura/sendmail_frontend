@@ -7,6 +7,7 @@ import { render, screen, waitFor, userEvent, createTestQueryClient } from '@/tes
 import { server } from '@/test/server';
 import { adminStaff, staffMember } from '@/test/fixtures';
 import { StaffForm } from './StaffForm';
+import { StaffListPage } from './StaffListPage';
 
 const renderStaffForm = (initialPath: string) => {
   server.use(http.get('/api/auth/me', () => HttpResponse.json(adminStaff)));
@@ -80,6 +81,49 @@ describe('StaffForm（新規登録）', () => {
     expect(
       await screen.findByText('このメールアドレスはすでに登録されています。別のアドレスをお使いください')
     ).toBeInTheDocument();
+  });
+
+  test('登録に成功して一覧画面へ遷移した直後から、新しいスタッフが（リロードなしで）表示される', async () => {
+    // 遷移先を実際のStaffListPageにすることで、「navigate直後はキャッシュが古いまま」という
+    // 回帰（invalidateQueriesをawaitしない／refetchTypeの既定が'active'のみ、等）を検出できるようにする。
+    let staffs = [adminStaff, staffMember];
+    const newStaff = { ...staffMember, id: 99, name: '佐藤 次郎', email: 'sato@example.com' };
+
+    server.use(
+      http.get('/api/auth/me', () => HttpResponse.json(adminStaff)),
+      http.get('/api/staffs', () => HttpResponse.json(staffs)),
+      http.post('/api/staffs', () => {
+        staffs = [...staffs, newStaff];
+        return HttpResponse.json(newStaff);
+      })
+    );
+
+    const client = createTestQueryClient();
+    // 一覧画面を訪れたあとに新規登録画面へ遷移した状態を再現するため、事前にキャッシュへ古いデータを入れておく
+    client.setQueryData(['staffs'], [adminStaff, staffMember]);
+
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/staffs/new']}>
+          <AuthProvider>
+            <Routes>
+              <Route path="/staffs/new" element={<StaffForm />} />
+              <Route path="/staffs" element={<StaffListPage />} />
+            </Routes>
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await user.type(await screen.findByLabelText(/^氏名/), newStaff.name);
+    await user.type(screen.getByLabelText(/^メールアドレス/), newStaff.email);
+    await user.type(screen.getByLabelText(/^パスワード/), 'abcd1234');
+    await user.selectOptions(screen.getByLabelText(/^権限/), 'STAFF');
+    await user.click(screen.getByRole('button', { name: '登録する' }));
+
+    await waitFor(() => expect(screen.getByText('スタッフ管理')).toBeInTheDocument());
+    expect(screen.getByText(newStaff.name)).toBeInTheDocument();
   });
 
   test('「キャンセル」をクリックすると一覧画面へ戻る', async () => {

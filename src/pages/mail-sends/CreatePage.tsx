@@ -156,6 +156,9 @@ export const CreatePage = () => {
     }
 
     if (succeededCount > 0) {
+      // ここではnavigateしないが、ユーザーがこの後サイドナビ等で送付先別一覧へ
+      // 手動で移動した際に古いキャッシュが一瞬表示されるのを避けるため、
+      // 成功分はここで同様に強制再取得しておく。
       await queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'], refetchType: 'all' });
     }
 
