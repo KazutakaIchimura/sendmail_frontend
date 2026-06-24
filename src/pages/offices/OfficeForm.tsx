@@ -46,8 +46,12 @@ export const OfficeForm = () => {
       isEdit
         ? updateOffice({ id: Number(id), data })
         : createOffice({ ...data, postalCode: data.postalCode ?? null, address: data.address ?? null, phone: data.phone ?? null, building: data.building ?? null }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['offices'] });
+    onSuccess: async () => {
+      // 遷移先の一覧画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
+      // refetchType省略時の既定（'active'のみ再取得）では何もせず即解決してしまう。
+      // 'all'を指定して未観測のキャッシュも強制的に再取得し、navigate後の初回表示を
+      // 最新データにする。
+      await queryClient.invalidateQueries({ queryKey: ['offices'], refetchType: 'all' });
       navigate('/offices');
     },
   });

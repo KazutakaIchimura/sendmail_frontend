@@ -146,13 +146,17 @@ export const CreatePage = () => {
     const succeededCount = combinations.length - failedResults.length;
 
     if (failedResults.length === 0) {
-      queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'] });
+      // 遷移先の一覧画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
+      // refetchType省略時の既定（'active'のみ再取得）では何もせず即解決してしまう。
+      // 'all'を指定して未観測のキャッシュも強制的に再取得し、navigate後の初回表示を
+      // 最新データにする。
+      await queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'], refetchType: 'all' });
       navigate('/mail-sends/by-office');
       return;
     }
 
     if (succeededCount > 0) {
-      queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'] });
+      await queryClient.invalidateQueries({ queryKey: ['mailSendsByOffice'], refetchType: 'all' });
     }
 
     const isDuplicate = failedResults.some(r => axios.isAxiosError(r.reason) && r.reason.response?.status === HTTP_STATUS_CONFLICT);

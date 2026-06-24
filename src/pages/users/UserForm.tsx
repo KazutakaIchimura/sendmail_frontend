@@ -40,9 +40,15 @@ export const UserForm = () => {
       isEdit
         ? updateUser({ id: Number(id), data })
         : createUser({ ...data, nameKana: data.nameKana ?? null, birthDate: data.birthDate ?? null, notes: data.notes ?? null }),
-    onSuccess: (saved) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['user', id] });
+    onSuccess: async (saved) => {
+      // 遷移先の一覧/詳細画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
+      // refetchType省略時の既定（'active'のみ再取得）では何もせず即解決してしまう。
+      // 'all'を指定して未観測のキャッシュも強制的に再取得し、navigate後の初回表示を
+      // 最新データにする。
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['users'], refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: ['user', id], refetchType: 'all' }),
+      ]);
       navigate(isEdit ? `/users/${id}` : `/users/${saved.id}`);
     },
   });
