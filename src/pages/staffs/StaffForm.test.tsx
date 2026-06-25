@@ -84,8 +84,11 @@ describe('StaffForm（新規登録）', () => {
   });
 
   test('登録に成功して一覧画面へ遷移した直後から、新しいスタッフが（リロードなしで）表示される', async () => {
-    // 遷移先を実際のStaffListPageにすることで、「navigate直後はキャッシュが古いまま」という
-    // 回帰（invalidateQueriesをawaitしない／refetchTypeの既定が'active'のみ、等）を検出できるようにする。
+    // 遷移先を実際のStaffListPageにすることで「navigate直後はキャッシュが古いまま」という
+    // 回帰を検出できるようにする。
+    // 背景: StaffFormは同一queryKey['staffs']にenabled:falseのobserverを持つため、
+    // invalidateQueries({ refetchType:'all' })ではisDisabled()=trueとなりGETが発火しない。
+    // fetchQueryで直接フェッチすることでnavigate前にキャッシュを確実に最新化している。
     let staffs = [adminStaff, staffMember];
     const newStaff = { ...staffMember, id: 99, name: '佐藤 次郎', email: 'sato@example.com' };
 

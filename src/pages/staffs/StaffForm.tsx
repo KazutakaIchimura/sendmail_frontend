@@ -43,11 +43,16 @@ export const StaffForm = () => {
         ? updateStaff({ id: Number(id), data: { name: data.name, email: data.email, role: data.role } })
         : createStaff(data),
     onSuccess: async () => {
-      // 遷移先の一覧画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
-      // refetchType省略時の既定（'active'のみ再取得）では何もせず即解決してしまう。
-      // 'all'を指定して未観測のキャッシュも強制的に再取得し、navigate後の初回表示を
-      // 最新データにする。
-      await queryClient.invalidateQueries({ queryKey: ['staffs'], refetchType: 'all' });
+      // このコンポーネントが同一 queryKey ['staffs'] に対して enabled:false の
+      // disabled observer を保持するため、invalidateQueries({ refetchType:'all' }) では
+      // isDisabled()=true と判定されて GET が発火せず即座に解決してしまう。
+      // fetchQuery は observer の disabled 状態に依存せず query.fetch() を直接呼ぶため、
+      // navigate 前にキャッシュを確実に最新化できる。
+      await queryClient.fetchQuery({
+        queryKey: ['staffs'],
+        queryFn: () => getStaffs({ includeInactive: true }),
+        staleTime: 0,
+      });
       if (isEdit && Number(id) === currentStaff?.id) {
         await refresh();
       }
