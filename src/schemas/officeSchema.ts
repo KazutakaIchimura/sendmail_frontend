@@ -24,7 +24,7 @@ export const officeSchema = z.object({
   name: z.string()
     .min(1, '事業所名を入力してください')
     .max(200, '事業所名は200文字以内で入力してください'),
-  officeType: z.string().optional().or(z.literal('')),
+  officeType: z.enum([...OFFICE_TYPES]).optional().or(z.literal('')),
   postalCode: z.string()
     .regex(/^\d{3}-?\d{4}$/, '郵便番号は数字7桁で入力してください（例：123-4567）')
     .optional().or(z.literal('')),
