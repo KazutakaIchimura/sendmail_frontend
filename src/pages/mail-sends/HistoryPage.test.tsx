@@ -1,8 +1,8 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, userEvent, createTestQueryClient, fireEvent } from '@/test/test-utils';
+import { render, screen, waitFor, userEvent, createTestQueryClient } from '@/test/test-utils';
 import { server } from '@/test/server';
 import { officeA, officeB, userTanaka, userYamada, mailSendPending, mailSendOverdue, mailSendSent } from '@/test/fixtures';
 import { HistoryPage } from './HistoryPage';
@@ -83,52 +83,4 @@ describe('HistoryPage（送付履歴）', () => {
     expect(await screen.findByText('2026/06/01')).toBeInTheDocument();
   });
 
-  test('「CSV出力」をクリックするとCSVファイルがダウンロードされる', async () => {
-    server.use(
-      http.get('/api/mail-sends/export', () =>
-        new HttpResponse(new Blob(['id,user\n']), { headers: { 'Content-Type': 'text/csv' } })
-      )
-    );
-
-    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-
-    const { user } = renderHistory();
-    await user.click(await screen.findByRole('button', { name: 'CSV出力' }));
-
-    await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
-    expect(clickSpy).toHaveBeenCalled();
-    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url'));
-
-    clickSpy.mockRestore();
-    createObjectURL.mockRestore();
-    revokeObjectURL.mockRestore();
-  });
-
-  test('CSV出力中はボタンが無効化され連打してもエクスポートは1回しか実行されない', async () => {
-    let callCount = 0;
-    server.use(
-      http.get('/api/mail-sends/export', async () => {
-        callCount++;
-        return new HttpResponse(new Blob(['id,user\n']), { headers: { 'Content-Type': 'text/csv' } });
-      })
-    );
-
-    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
-    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-
-    renderHistory();
-    const button = await screen.findByRole('button', { name: 'CSV出力' });
-    fireEvent.click(button);
-    fireEvent.click(button);
-
-    await waitFor(() => expect(screen.getByRole('button', { name: 'CSV出力' })).toBeEnabled());
-    expect(callCount).toBe(1);
-
-    clickSpy.mockRestore();
-    createObjectURL.mockRestore();
-    revokeObjectURL.mockRestore();
-  });
 });

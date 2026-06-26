@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMailSends, exportMailSendsCsv } from '@/api/mailSends';
+import { getMailSends } from '@/api/mailSends';
 import { getOffices } from '@/api/offices';
 import { getUsers } from '@/api/users';
 import { PageTitle } from '@/components/ui/PageTitle';
@@ -42,13 +42,6 @@ export const HistoryPage = () => {
   const [dateTo, setDateTo] = useState(`${CURRENT_YEAR}-${CURRENT_MONTH}`);
   const [officeId, setOfficeId] = useState('');
   const [userId, setUserId] = useState('');
-  const [exportError, setExportError] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-
-  useEffect(() => {
-    setExportError(null);
-  }, [dateFrom, dateTo, officeId, userId]);
-
   const { data: mailSends = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['mailSends', { dateFrom, dateTo, officeId, userId }],
     queryFn: () => getMailSends({
@@ -61,50 +54,14 @@ export const HistoryPage = () => {
   const { data: offices = [] } = useQuery({ queryKey: ['offices'], queryFn: getOffices });
   const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
 
-  /**
-   * 現在のフィルタ条件で CSV をエクスポートしダウンロードする
-   */
-  const handleCsvExport = async () => {
-    setExportError(null);
-    setIsExporting(true);
-    try {
-      const blob = await exportMailSendsCsv({
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        officeId: officeId ? Number(officeId) : undefined,
-        userId: userId ? Number(userId) : undefined,
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'mail-sends.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
-    } catch {
-      setExportError('CSV出力に失敗しました。しばらく待ってからもう一度お試しください。');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const years = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(String);
+  const years =[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(String);
   const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
 
   const sentDates = [...new Set(mailSends.map(m => m.updatedAt.slice(0, 10)))].sort().reverse();
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <PageTitle>📋 送付履歴</PageTitle>
-        <Button variant="outline" size="md" disabled={isExporting} onClick={handleCsvExport}>
-          {isExporting ? '出力中...' : 'CSV出力'}
-        </Button>
-      </div>
-      {exportError && (
-        <p role="alert" className="text-std-14N-130 text-error-red">{exportError}</p>
-      )}
+      <PageTitle>📋 送付履歴</PageTitle>
 
       <div className="bg-white rounded-8 border border-solid-gray-200 p-4 flex flex-wrap gap-4">
         <div className="flex items-center gap-2">

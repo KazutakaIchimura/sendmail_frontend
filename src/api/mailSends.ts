@@ -26,10 +26,3 @@ export const createBatch = (data: {
   notes?: string;
 }) => client.post<MailSendBatch>('/mail-send-batches', data).then(r => r.data);
 
-export const exportMailSendsCsv = (params?: {
-  dateFrom?: string;
-  dateTo?: string;
-  officeId?: number;
-  userId?: number;
-}) =>
-  client.get<Blob>('/mail-sends/export', { params, responseType: 'blob' }).then(r => r.data);

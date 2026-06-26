@@ -25,8 +25,6 @@ export const handlers = [
   http.get(`${API}/mail-sends`, () => HttpResponse.json([mailSendPending, mailSendSent])),
   http.post(`${API}/mail-sends`, () => HttpResponse.json(mailSendPending)),
   http.post(`${API}/mail-send-batches`, () => HttpResponse.json({ batchId: 9999, sentAt: '2026-06-08T00:00:00Z', updatedCount: 1 })),
-  http.get(`${API}/mail-sends/export`, () => new HttpResponse(new Blob(['id,user\n']), { headers: { 'Content-Type': 'text/csv' } })),
-
   http.get(`${API}/users`, () => HttpResponse.json([userTanaka, userYamada])),
   http.get(`${API}/users/:id`, () => HttpResponse.json(userTanakaWithOffices)),
   http.post(`${API}/users`, () => HttpResponse.json(userTanaka)),
