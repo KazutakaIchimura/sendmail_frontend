@@ -44,6 +44,43 @@ describe('OfficeForm（新規登録）', () => {
 
     await waitFor(() => expect(screen.getByText('事業所一覧画面')).toBeInTheDocument());
   });
+
+  test('事業所種別を選択すると POST ペイロードに含まれる', async () => {
+    let sentBody: Record<string, unknown> | null = null;
+    server.use(
+      http.post('/api/offices', async ({ request }) => {
+        sentBody = await request.json() as Record<string, unknown>;
+        return HttpResponse.json(officeA);
+      }),
+    );
+
+    const { user } = renderOfficeForm('/offices/new');
+
+    await user.type(await screen.findByLabelText(/^事業所名/), '新事業所');
+    await user.selectOptions(screen.getByLabelText(/^事業所種別/), '就労継続支援A型');
+    await user.click(screen.getByRole('button', { name: '登録する' }));
+
+    await waitFor(() => expect(screen.getByText('事業所一覧画面')).toBeInTheDocument());
+    expect(sentBody?.officeType).toBe('就労継続支援A型');
+  });
+
+  test('事業所種別を選択しない場合は null として POST される', async () => {
+    let sentBody: Record<string, unknown> | null = null;
+    server.use(
+      http.post('/api/offices', async ({ request }) => {
+        sentBody = await request.json() as Record<string, unknown>;
+        return HttpResponse.json(officeA);
+      }),
+    );
+
+    const { user } = renderOfficeForm('/offices/new');
+
+    await user.type(await screen.findByLabelText(/^事業所名/), '新事業所');
+    await user.click(screen.getByRole('button', { name: '登録する' }));
+
+    await waitFor(() => expect(screen.getByText('事業所一覧画面')).toBeInTheDocument());
+    expect(sentBody?.officeType).toBeNull();
+  });
 });
 
 describe('OfficeForm（編集）', () => {
@@ -55,5 +92,6 @@ describe('OfficeForm（編集）', () => {
     await waitFor(() => expect(screen.getByLabelText(/^事業所名/)).toHaveValue(officeA.name));
     expect(screen.getByLabelText(/^郵便番号/)).toHaveValue(officeA.postalCode);
     expect(screen.getByLabelText(/^住所/)).toHaveValue(officeA.address);
+    expect(screen.getByLabelText(/^事業所種別/)).toHaveValue(officeA.officeType);
   });
 });
