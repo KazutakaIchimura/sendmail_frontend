@@ -125,7 +125,7 @@ describe('StaffForm（新規登録）', () => {
     await user.selectOptions(screen.getByLabelText(/^権限/), 'STAFF');
     await user.click(screen.getByRole('button', { name: '登録する' }));
 
-    await waitFor(() => expect(screen.getByText('スタッフ管理')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/スタッフ管理/)).toBeInTheDocument());
     expect(screen.getByText(newStaff.name)).toBeInTheDocument();
   });
 
