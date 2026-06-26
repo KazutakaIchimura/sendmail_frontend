@@ -12,10 +12,10 @@ export const mockStaffs = [
 ];
 
 export const mockOffices = [
-  { id: 1, name: 'グループホーム さくら', postalCode: '150-0001', address: '東京都渋谷区神宮前1-1-1', phone: '03-1234-5678', isActive: true },
-  { id: 2, name: 'グループホーム ひまわり', postalCode: '160-0023', address: '東京都新宿区西新宿2-2-2', phone: '03-2345-6789', isActive: true },
-  { id: 3, name: 'グループホーム つくし', postalCode: '130-0021', address: '東京都墨田区緑3-3-3', phone: '03-3456-7890', isActive: true },
-  { id: 4, name: 'グループホーム もみじ', postalCode: '170-0013', address: '東京都豊島区東池袋4-4-4', phone: '03-4567-8901', isActive: false },
+  { id: 1, name: 'グループホーム さくら', officeType: '共同生活援助（グループホーム）', postalCode: '150-0001', address: '東京都渋谷区神宮前1-1-1', phone: '03-1234-5678', isActive: true },
+  { id: 2, name: 'グループホーム ひまわり', officeType: '共同生活援助（グループホーム）', postalCode: '160-0023', address: '東京都新宿区西新宿2-2-2', phone: '03-2345-6789', isActive: true },
+  { id: 3, name: 'グループホーム つくし', officeType: '共同生活援助（グループホーム）', postalCode: '130-0021', address: '東京都墨田区緑3-3-3', phone: '03-3456-7890', isActive: true },
+  { id: 4, name: 'グループホーム もみじ', officeType: null, postalCode: '170-0013', address: '東京都豊島区東池袋4-4-4', phone: '03-4567-8901', isActive: false },
 ];
 
 export const mockUsers = [

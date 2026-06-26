@@ -45,6 +45,7 @@ export const roleOptions: RoleOption[] = [
 export const officeA: Office = {
   id: 10,
   name: '事業所A グループホーム',
+  officeType: '共同生活援助（グループホーム）',
   postalCode: '123-4567',
   address: '東京都○○区1-2-3',
   building: null,
@@ -55,6 +56,7 @@ export const officeA: Office = {
 export const officeB: Office = {
   id: 11,
   name: '事業所B 就労支援センター',
+  officeType: '就労継続支援B型',
   postalCode: '456-7890',
   address: '神奈川県△△市4-5-6',
   building: null,
@@ -65,6 +67,7 @@ export const officeB: Office = {
 export const inactiveOffice: Office = {
   id: 12,
   name: '事業所C（無効）',
+  officeType: null,
   postalCode: '789-0123',
   address: '埼玉県××市7-8-9',
   building: null,
@@ -76,6 +79,7 @@ export const inactiveOffice: Office = {
 export const officeD: Office = {
   id: 13,
   name: '事業所D 自立訓練センター',
+  officeType: '自立訓練（生活訓練）',
   postalCode: '321-0987',
   address: '千葉県□□市1-1-1',
   building: null,

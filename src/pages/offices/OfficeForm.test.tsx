@@ -55,5 +55,6 @@ describe('OfficeForm（編集）', () => {
     await waitFor(() => expect(screen.getByLabelText(/^事業所名/)).toHaveValue(officeA.name));
     expect(screen.getByLabelText(/^郵便番号/)).toHaveValue(officeA.postalCode);
     expect(screen.getByLabelText(/^住所/)).toHaveValue(officeA.address);
+    expect(screen.getByLabelText(/^事業所種別/)).toHaveValue(officeA.officeType);
   });
 });

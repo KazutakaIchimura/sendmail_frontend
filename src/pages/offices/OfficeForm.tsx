@@ -8,9 +8,10 @@ import { PageTitle } from '@/components/ui/PageTitle';
 import { Button } from '@/components/dads/Button/Button';
 import { Label } from '@/components/dads/Label/Label';
 import { Input } from '@/components/dads/Input/Input';
+import { Select } from '@/components/dads/Select/Select';
 import { RequirementBadge } from '@/components/dads/RequirementBadge/RequirementBadge';
 import { FormError } from '@/components/form/FormError';
-import { officeSchema, type OfficeForm as OfficeFormType } from '@/schemas/officeSchema';
+import { officeSchema, OFFICE_TYPES, type OfficeForm as OfficeFormType } from '@/schemas/officeSchema';
 import { Furigana } from '@/components/ui/Furigana';
 
 export const OfficeForm = () => {
@@ -34,6 +35,7 @@ export const OfficeForm = () => {
   useEffect(() => {
     if (office) reset({
       name: office.name,
+      officeType: office.officeType ?? '',
       postalCode: office.postalCode ?? '',
       address: office.address ?? '',
       building: office.building ?? '',
@@ -44,8 +46,8 @@ export const OfficeForm = () => {
   const mutation = useMutation({
     mutationFn: (data: OfficeFormType) =>
       isEdit
-        ? updateOffice({ id: Number(id), data })
-        : createOffice({ ...data, postalCode: data.postalCode ?? null, address: data.address ?? null, phone: data.phone ?? null, building: data.building ?? null }),
+        ? updateOffice({ id: Number(id), data: { ...data, officeType: data.officeType || null, postalCode: data.postalCode || null, address: data.address || null, phone: data.phone || null, building: data.building || null } })
+        : createOffice({ ...data, officeType: data.officeType || null, postalCode: data.postalCode || null, address: data.address || null, phone: data.phone || null, building: data.building || null }),
     onSuccess: async () => {
       // 遷移先の一覧画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
       // refetchType省略時の既定（'active'のみ再取得）では何もせず即解決してしまう。
@@ -73,6 +75,15 @@ export const OfficeForm = () => {
           <Label htmlFor="name"><Furigana text="事業所名" /><RequirementBadge>必須</RequirementBadge></Label>
           <Input id="name" type="text" placeholder="例：グループホーム○○" isError={!!errors.name} {...register('name')} />
           <FormError message={errors.name?.message} />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="officeType"><Furigana text="事業所種別" /><RequirementBadge isOptional>任意</RequirementBadge></Label>
+          <Select id="officeType" blockSize="md" isError={!!errors.officeType} {...register('officeType')}>
+            <option value="">（選択しない）</option>
+            {OFFICE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </Select>
+          <FormError message={errors.officeType?.message} />
         </div>
 
         <div className="flex flex-col gap-1">

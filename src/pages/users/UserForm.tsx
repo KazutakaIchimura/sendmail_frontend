@@ -38,8 +38,21 @@ export const UserForm = () => {
   const mutation = useMutation({
     mutationFn: (data: UserFormType) =>
       isEdit
-        ? updateUser({ id: Number(id), data })
-        : createUser({ ...data, nameKana: data.nameKana ?? null, birthDate: data.birthDate ?? null, notes: data.notes ?? null }),
+        ? updateUser({
+            id: Number(id),
+            data: {
+              name: data.name,
+              nameKana: data.nameKana || null,
+              notes: data.notes || null,
+              ...(data.birthDate ? { birthDate: data.birthDate } : {}),
+            },
+          })
+        : createUser({
+            name: data.name,
+            nameKana: data.nameKana || null,
+            birthDate: data.birthDate || null,
+            notes: data.notes || null,
+          }),
     onSuccess: async (saved) => {
       // 遷移先の一覧/詳細画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
       // refetchType省略時の既定（'active'のみ再取得）では何もせず即解決してしまう。

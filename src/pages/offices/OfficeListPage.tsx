@@ -65,6 +65,11 @@ export const OfficeListPage = () => {
                 {o.name}
                 {!o.isActive && <span className="ml-2 text-xs text-solid-gray-500">※無効</span>}
               </p>
+              {o.officeType && (
+                <p className="text-std-12N-150 text-solid-gray-600 mt-0.5">
+                  <span className="inline-block rounded-4 border border-solid-gray-400 px-1.5 py-0.5 text-xs">{o.officeType}</span>
+                </p>
+              )}
               {(o.postalCode || o.address) && (
                 <p className="text-std-14N-130 text-solid-gray-600 mt-0.5">
                   {o.postalCode ? `〒${o.postalCode} ` : ''}{o.address}
