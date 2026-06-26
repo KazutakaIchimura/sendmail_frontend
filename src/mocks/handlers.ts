@@ -146,7 +146,7 @@ export const handlers = [
     return HttpResponse.json(office);
   }),
   http.post('/api/offices', async ({ request }) => {
-    const body = await request.json() as { name: string; postalCode?: string | null; address?: string | null; phone?: string | null };
+    const body = await request.json() as { name: string; officeType?: string | null; postalCode?: string | null; building?: string | null; address?: string | null; phone?: string | null };
     const newOffice = { id: offices.length + 10, isActive: true, ...body };
     offices.push(newOffice as typeof offices[0]);
     return HttpResponse.json(newOffice, { status: 201 });
