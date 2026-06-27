@@ -36,11 +36,11 @@ export const Header = () => {
         本文へスキップ
       </a>
       <header className="bg-green-700 shrink-0" role="banner">
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-6 h-14">
+        <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-3 sm:px-6 h-14">
           <span className="text-std-17B-170 text-white select-none">郵便物送付管理</span>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {currentStaff && (
-              <span className="text-std-14N-130 text-white opacity-90">
+              <span className="hidden sm:inline text-std-14N-130 text-white opacity-90">
                 {currentStaff.name}
               </span>
             )}
@@ -57,7 +57,7 @@ export const Header = () => {
           </div>
         </div>
         <nav aria-label="グローバルナビゲーション" className="bg-solid-gray-50 border-b border-solid-gray-200">
-          <ul className="max-w-5xl mx-auto w-full flex gap-2 px-4 py-2 overflow-x-auto" role="list">
+          <ul className="max-w-5xl mx-auto w-full flex gap-2 px-2 sm:px-4 py-2 overflow-x-auto scrollbar-hide" role="list">
             {links.map(({ to, label, end }) => (
               <li key={to} role="none">
                 <NavLink

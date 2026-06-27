@@ -98,6 +98,9 @@ export const BatchSendModal = ({ isOpen, selectedMailSends, onClose, onSuccess }
           />
           <FormError message={notesError} />
         </div>
+        <p className="text-std-14N-130 text-solid-gray-600 w-full bg-yellow-50 border border-yellow-300 rounded-8 px-3 py-2">
+          ℹ️ このシステムは送付記録の管理のみです。国保連への給付費請求は別途請求システムで行ってください。
+        </p>
         {mutation.isError && (
           <p className="text-std-14N-130 text-red-600 w-full">しばらく待ってからもう一度お試しください</p>
         )}

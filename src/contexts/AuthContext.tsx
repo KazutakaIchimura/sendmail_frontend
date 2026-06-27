@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { Staff } from '@/types/staff';
 import { client } from '@/api/client';
+import { useAccessibility } from '@/contexts/AccessibilityContext';
 
 type AuthContextType = {
   currentStaff: Staff | null;
@@ -15,11 +16,13 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentStaff, setCurrentStaff] = useState<Staff | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { applyServerSettings } = useAccessibility();
 
   const fetchMe = async () => {
     try {
       const r = await client.get<Staff>('/auth/me');
       setCurrentStaff(r.data);
+      applyServerSettings(r.data.accessibilitySettings ?? null);
     } catch {
       setCurrentStaff(null);
     } finally {

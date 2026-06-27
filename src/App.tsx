@@ -13,6 +13,7 @@ import { OfficeListPage } from '@/pages/offices/OfficeListPage';
 import { OfficeForm } from '@/pages/offices/OfficeForm';
 import { StaffListPage } from '@/pages/staffs/StaffListPage';
 import { StaffForm } from '@/pages/staffs/StaffForm';
+import { SchedulePage } from '@/pages/schedule/SchedulePage';
 import { ChangePasswordPage } from '@/pages/password/ChangePasswordPage';
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/mail-sends/by-office" element={<ByOfficePage />} />
           <Route path="/mail-sends/new" element={<CreatePage />} />
           <Route path="/mail-sends/history" element={<HistoryPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/users" element={<UserListPage />} />
           <Route path="/users/new" element={<UserForm />} />
           <Route path="/users/:id" element={<UserDetailPage />} />

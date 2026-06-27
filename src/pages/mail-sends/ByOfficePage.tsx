@@ -46,14 +46,14 @@ export const ByOfficePage = () => {
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <PageTitle>📮 送付先別一覧</PageTitle>
         <Button variant="solid-fill" size="md" onClick={() => navigate('/mail-sends/new')}>
           ➕ 送付物を新規登録
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <Label htmlFor="status-filter" size="sm">ステータス:</Label>
           <Select

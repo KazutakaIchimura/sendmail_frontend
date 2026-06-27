@@ -8,6 +8,7 @@ export type Staff = {
   roleId: number;
   isActive: boolean;
   forcePasswordChange: boolean;
+  accessibilitySettings: string | null;
   createdAt: string;
 };
 

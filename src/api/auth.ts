@@ -1,5 +1,6 @@
 import { client } from './client';
 import type { Staff } from '@/types/staff';
+import type { AccessibilitySettings } from '@/types/accessibility';
 
 export const login = (data: { email: string; password: string }) => {
   const params = new URLSearchParams();
@@ -19,3 +20,6 @@ export const getMe = () =>
 export const changePassword = (data: {
   newPassword: string;
 }) => client.post('/auth/password/change', data).then(r => r.data);
+
+export const saveAccessibilitySettings = (settings: AccessibilitySettings) =>
+  client.put('/auth/accessibility-settings', settings);

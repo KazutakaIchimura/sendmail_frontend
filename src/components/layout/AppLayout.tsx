@@ -18,7 +18,7 @@ const AppLayoutContent = () => {
   return (
     <div className={clsx('flex flex-col min-h-screen', bgClass)}>
       <Header />
-      <main id="main-content" className="flex-1 p-6 max-w-5xl mx-auto w-full">
+      <main id="main-content" className="flex-1 p-3 sm:p-6 max-w-5xl mx-auto w-full">
         <Outlet />
       </main>
       <SessionTimeoutModal isOpen={showWarning} remainingMs={remainingMs} onExtend={extend} />

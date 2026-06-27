@@ -120,24 +120,28 @@ export const HistoryPage = () => {
               <div className="flex flex-col gap-2">
                 {[...dayBatches.entries()].map(([batchId, items]) => (
                   <div key={batchId ?? 'solo'} className="bg-white rounded-8 border border-solid-gray-200 overflow-hidden">
-                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-2 bg-solid-gray-50 border-b border-solid-gray-100 text-std-12N-130 text-solid-gray-500">
-                      <span>事業所名</span>
-                      <span>氏名</span>
-                      <span>種別</span>
-                      <span>送付月</span>
-                      <span>ステータス</span>
+                    <div className="overflow-x-auto">
+                      <div className="min-w-[480px]">
+                        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-2 bg-solid-gray-50 border-b border-solid-gray-100 text-std-12N-130 text-solid-gray-500">
+                          <span>事業所名</span>
+                          <span>氏名</span>
+                          <span>種別</span>
+                          <span>送付月</span>
+                          <span>ステータス</span>
+                        </div>
+                        <ul className="divide-y divide-solid-gray-100">
+                          {items.map(ms => (
+                            <li key={ms.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center px-4 py-3 text-std-14N-130 text-solid-gray-800">
+                              <span className="font-medium truncate">{ms.officeName}</span>
+                              <span className="truncate">{ms.userName}</span>
+                              <span className="text-solid-gray-600">{SEND_TYPE_LABEL[ms.sendType] ?? ms.sendType}</span>
+                              <span className="text-solid-gray-500">{formatMonth(ms.sendMonth)}</span>
+                              <StatusBadge status={ms.status} isOverdue={ms.isOverdue} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
-                    <ul className="divide-y divide-solid-gray-100">
-                      {items.map(ms => (
-                        <li key={ms.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center px-4 py-3 text-std-14N-130 text-solid-gray-800">
-                          <span className="font-medium truncate">{ms.officeName}</span>
-                          <span className="truncate">{ms.userName}</span>
-                          <span className="text-solid-gray-600">{SEND_TYPE_LABEL[ms.sendType] ?? ms.sendType}</span>
-                          <span className="text-solid-gray-500">{formatMonth(ms.sendMonth)}</span>
-                          <StatusBadge status={ms.status} isOverdue={ms.isOverdue} />
-                        </li>
-                      ))}
-                    </ul>
                   </div>
                 ))}
               </div>

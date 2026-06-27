@@ -12,5 +12,8 @@ export const userSchema = z.object({
     .refine(v => !v || new Date(v) < new Date(), '生年月日は過去の日付を入力してください')
     .optional().or(z.literal('')),
   notes: z.string().max(1000, '備考は1000文字以内で入力してください').optional(),
+  recipientNumber: z.string().max(20, '受給者証番号は20文字以内で入力してください').optional().or(z.literal('')),
+  disabilitySupportCategory: z.string().optional().nullable(),
+  assignedStaffId: z.number().nullable().optional(),
 });
 export type UserForm = z.infer<typeof userSchema>;

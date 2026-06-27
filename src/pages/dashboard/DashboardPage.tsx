@@ -39,7 +39,7 @@ export const DashboardPage = () => {
         <PageTitle><span aria-hidden="true">📅 </span>{formatMonth(data.currentMonth)}</PageTitle>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SummaryCard
           icon="⏳"
           label="送付待ち"
@@ -55,7 +55,7 @@ export const DashboardPage = () => {
 
       <RecentHistoryList history={data.recentHistory ?? []} />
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button variant="solid-fill" size="md" onClick={() => navigate('/mail-sends/new')}>
           ➕ 送付物を新規登録
         </Button>
@@ -63,6 +63,10 @@ export const DashboardPage = () => {
           📮 送付先別一覧
         </Button>
       </div>
+
+      <p className="text-std-14N-130 text-solid-gray-600 bg-yellow-50 border border-yellow-300 rounded-8 px-3 py-2">
+        ℹ️ このシステムは送付記録の管理のみです。国保連への給付費請求は別途請求システムで行ってください。
+      </p>
     </div>
   );
 };
