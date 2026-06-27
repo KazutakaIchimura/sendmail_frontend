@@ -10,13 +10,13 @@ export const getAllUsers = () =>
 export const getUser = (id: number) =>
   client.get<UserWithOffices>(`/users/${id}`).then(r => r.data);
 
-export const createUser = (data: Omit<User, 'id' | 'isActive' | 'createdAt' | 'updatedAt'>) =>
+export const createUser = (data: Omit<User, 'id' | 'isActive' | 'createdAt' | 'updatedAt' | 'assignedStaffName'>) =>
   client.post<User>('/users', data).then(r => r.data);
 
 /**
  * 利用者情報を更新する
  */
-export const updateUser = ({ id, data }: { id: number; data: Omit<Partial<User>, 'id' | 'isActive' | 'createdAt' | 'updatedAt'> }) =>
+export const updateUser = ({ id, data }: { id: number; data: Omit<Partial<User>, 'id' | 'isActive' | 'createdAt' | 'updatedAt' | 'assignedStaffName'> }) =>
   client.patch<User>(`/users/${id}`, data).then(r => r.data);
 
 /**

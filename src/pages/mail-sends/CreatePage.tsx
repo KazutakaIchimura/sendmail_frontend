@@ -55,12 +55,12 @@ const StepIndicator = ({ current }: StepIndicatorProps) => (
             'border-solid-gray-300 text-solid-gray-400 bg-white'
           )}>{i + 1}</span>
           <span className={clsx(
-            'text-xs',
+            'hidden sm:block text-xs',
             i === current ? 'text-green-700 font-bold' : 'text-solid-gray-500'
           )}>{label}</span>
         </div>
         {i < STEPS.length - 1 && (
-          <div className={clsx('h-0.5 w-12 mx-1 mb-5', i < current ? 'bg-green-700' : 'bg-solid-gray-200')} />
+          <div className={clsx('h-0.5 w-6 sm:w-12 mx-1 mb-0 sm:mb-5', i < current ? 'bg-green-700' : 'bg-solid-gray-200')} />
         )}
       </li>
     ))}
@@ -334,6 +334,9 @@ export const CreatePage = () => {
               事業所×送付種別の組み合わせで{totalRecords}件を一括登録します。
             </p>
           )}
+          <p className="text-std-14N-130 text-solid-gray-600 bg-yellow-50 border border-yellow-300 rounded-8 px-3 py-2">
+            ℹ️ このシステムは送付記録の管理のみです。国保連への給付費請求は別途請求システムで行ってください。
+          </p>
           {serverError && <p className="text-std-14N-130 text-red-600" role="alert">{serverError}</p>}
           <div className="flex justify-between mt-2">
             <Button variant="outline" size="md" onClick={() => { setStep(3); setServerError(''); setRetryCombinations(null); }}>← 戻る</Button>

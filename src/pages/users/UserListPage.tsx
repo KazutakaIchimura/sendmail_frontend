@@ -53,7 +53,7 @@ export const UserListPage = () => {
         </Button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SearchInput placeholder="氏名・ふりがなで検索..." value={search} onChange={setSearch} />
         {isAdmin && (
           <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export const UserListPage = () => {
       <ul className="flex flex-col gap-2">
         {filtered.map(u => (
           <li key={u.id} className={clsx(
-            'bg-white rounded-8 border border-solid-gray-200 px-4 py-4 flex items-center justify-between gap-4',
+            'bg-white rounded-8 border border-solid-gray-200 px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3',
             !u.isActive && 'opacity-60'
           )}>
             <div className="flex-1 min-w-0">
@@ -87,8 +87,11 @@ export const UserListPage = () => {
                 {u.nameKana && <span className="text-std-14N-130 text-solid-gray-500 ml-2">{u.nameKana}</span>}
                 {!u.isActive && <span className="ml-2 text-xs text-solid-gray-500">※無効</span>}
               </p>
+              <p className="text-std-14N-130 text-solid-gray-500 mt-0.5">
+                担当: {u.assignedStaffName ?? '未設定'}
+              </p>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex flex-wrap gap-2 sm:shrink-0">
               {!u.isActive && (
                 <Button variant="outline" size="xs" onClick={() => enableMutation.mutate(u.id)}>
                   有効に戻す

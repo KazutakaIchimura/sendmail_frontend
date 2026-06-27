@@ -4,10 +4,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser, createUser, updateUser } from '@/api/users';
+import { getStaffs } from '@/api/staffs';
+import { useAuth } from '@/contexts/AuthContext';
 import { PageTitle } from '@/components/ui/PageTitle';
 import { Button } from '@/components/dads/Button/Button';
 import { Label } from '@/components/dads/Label/Label';
 import { Input } from '@/components/dads/Input/Input';
+import { Select } from '@/components/dads/Select/Select';
 import { Textarea } from '@/components/dads/Textarea/Textarea';
 import { RequirementBadge } from '@/components/dads/RequirementBadge/RequirementBadge';
 import { FormError } from '@/components/form/FormError';
@@ -19,6 +22,7 @@ export const UserForm = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
 
   const { data: user } = useQuery({
     queryKey: ['user', id],
@@ -26,13 +30,28 @@ export const UserForm = () => {
     enabled: isEdit,
   });
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<UserFormType>({
+  const { data: staffs = [] } = useQuery({
+    queryKey: ['staffs'],
+    queryFn: () => getStaffs(),
+    enabled: isAdmin,
+  });
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<UserFormType>({
     resolver: zodResolver(userSchema),
   });
+  const watchedStaffId = watch('assignedStaffId');
 
   // NOTE: 編集時に取得したユーザー情報をフォームに反映する（react-hook-form の reset が必要）
   useEffect(() => {
-    if (user) reset({ name: user.name, nameKana: user.nameKana ?? '', birthDate: user.birthDate ?? '', notes: user.notes ?? '' });
+    if (user) reset({
+      name: user.name,
+      nameKana: user.nameKana ?? '',
+      birthDate: user.birthDate ?? '',
+      notes: user.notes ?? '',
+      recipientNumber: user.recipientNumber ?? '',
+      disabilitySupportCategory: user.disabilitySupportCategory ?? null,
+      assignedStaffId: user.assignedStaffId ?? null,
+    });
   }, [user, reset]);
 
   const mutation = useMutation({
@@ -44,7 +63,10 @@ export const UserForm = () => {
               name: data.name,
               nameKana: data.nameKana || null,
               notes: data.notes || null,
+              recipientNumber: data.recipientNumber || null,
+              disabilitySupportCategory: data.disabilitySupportCategory ?? null,
               ...(data.birthDate ? { birthDate: data.birthDate } : {}),
+              assignedStaffId: isAdmin ? (data.assignedStaffId ?? null) : undefined,
             },
           })
         : createUser({
@@ -52,6 +74,9 @@ export const UserForm = () => {
             nameKana: data.nameKana || null,
             birthDate: data.birthDate || null,
             notes: data.notes || null,
+            recipientNumber: data.recipientNumber || null,
+            disabilitySupportCategory: data.disabilitySupportCategory ?? null,
+            assignedStaffId: isAdmin ? (data.assignedStaffId ?? null) : undefined,
           }),
     onSuccess: async (saved) => {
       // 遷移先の一覧/詳細画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、
@@ -95,9 +120,50 @@ export const UserForm = () => {
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="notes">備考<RequirementBadge isOptional>任意</RequirementBadge></Label>
-          <Textarea id="notes" rows={4} placeholder="自由記載" isError={!!errors.notes} {...register('notes')} />
+          <p className="text-xs text-solid-gray-500">
+            支援方針・コミュニケーション上の配慮・家族状況など、送付管理に関連する情報を記載してください。
+            住所・電話番号は事業所管理で、受給者証番号は専用フィールドに入力してください。
+          </p>
+          <Textarea id="notes" rows={4} placeholder="例：計画相談のほか移動支援も利用中。連絡は午後が望ましい。" isError={!!errors.notes} {...register('notes')} />
           <FormError message={errors.notes?.message} />
         </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="recipientNumber">受給者証番号<RequirementBadge isOptional>任意</RequirementBadge></Label>
+          <Input id="recipientNumber" type="text" placeholder="例：0123456789" isError={!!errors.recipientNumber} {...register('recipientNumber')} />
+          <FormError message={errors.recipientNumber?.message} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="disabilitySupportCategory">障害支援区分<RequirementBadge isOptional>任意</RequirementBadge></Label>
+          <Select
+            id="disabilitySupportCategory"
+            value={watch('disabilitySupportCategory') ?? ''}
+            onChange={e => setValue('disabilitySupportCategory', e.target.value || null)}
+          >
+            <option value="">未設定</option>
+            <option value="非該当">非該当</option>
+            <option value="区分1">区分1</option>
+            <option value="区分2">区分2</option>
+            <option value="区分3">区分3</option>
+            <option value="区分4">区分4</option>
+            <option value="区分5">区分5</option>
+            <option value="区分6">区分6</option>
+          </Select>
+        </div>
+        {isAdmin && (
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="assignedStaffId">担当スタッフ<RequirementBadge isOptional>任意</RequirementBadge></Label>
+            <Select
+              id="assignedStaffId"
+              value={watchedStaffId != null ? String(watchedStaffId) : ''}
+              onChange={e => setValue('assignedStaffId', e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">担当なし</option>
+              {staffs.filter(s => s.isActive).map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </Select>
+          </div>
+        )}
         <div className="flex justify-between mt-2">
           <Button type="button" variant="outline" size="md" onClick={() => navigate(-1)}>キャンセル</Button>
           <Button type="submit" variant="solid-fill" size="md" disabled={isSubmitting || mutation.isPending}>

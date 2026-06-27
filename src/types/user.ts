@@ -6,7 +6,11 @@ export type User = {
   nameKana: string | null;
   birthDate: string | null;
   notes: string | null;
+  recipientNumber: string | null;
+  disabilitySupportCategory: string | null;
   isActive: boolean;
+  assignedStaffId: number | null;
+  assignedStaffName: string | null;
   createdAt: string;
   updatedAt: string;
 };

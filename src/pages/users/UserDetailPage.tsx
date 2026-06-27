@@ -54,7 +54,7 @@ export const UserDetailPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => navigate('/users')} className="text-std-14N-130 text-green-700 hover:underline">← 戻る</button>
         <PageTitle>👤 {user.name}</PageTitle>
         {user.isActive && (
@@ -71,6 +71,9 @@ export const UserDetailPage = () => {
           { label: 'ふりがな', value: user.nameKana ?? '────' },
           { label: '生年月日', value: formatDate(user.birthDate) },
           { label: '備考', value: user.notes ?? '────' },
+          { label: '受給者証番号', value: user.recipientNumber ?? '────' },
+          { label: '障害支援区分', value: user.disabilitySupportCategory ?? '────' },
+          { label: '担当スタッフ', value: user.assignedStaffName ?? '未設定' },
         ].map(({ label, value }) => (
           <div key={label} className="flex gap-4 px-4 py-3">
             <span className="text-std-14B-130 text-solid-gray-700 w-24 shrink-0">{label}</span>
