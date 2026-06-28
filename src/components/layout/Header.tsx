@@ -13,6 +13,7 @@ const BASE_LINKS: NavItem[] = [
   { to: '/', label: 'ホーム', end: true },
   { to: '/mail-sends/by-office', label: '送付先別一覧', end: false },
   { to: '/mail-sends/history', label: '送付履歴', end: false },
+  { to: '/schedule', label: 'スケジュール管理', end: false },
   { to: '/users', label: '利用者管理', end: false },
   { to: '/offices', label: '事業所管理', end: false },
 ];
