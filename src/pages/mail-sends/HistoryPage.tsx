@@ -97,6 +97,26 @@ export const HistoryPage = () => {
             {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const params = new URLSearchParams();
+            if (dateFrom) params.set('dateFrom', dateFrom);
+            if (dateTo) params.set('dateTo', dateTo);
+            if (officeId) params.set('officeId', officeId);
+            if (userId) params.set('userId', userId);
+            const base = (import.meta.env.VITE_API_BASE_URL ?? '/api') as string;
+            const a = document.createElement('a');
+            a.href = `${base}/mail-sends/csv?${params}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }}
+        >
+          CSV出力
+        </Button>
       </div>
 
       {isLoading && <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>}

@@ -88,4 +88,56 @@ describe('OfficeListPage', () => {
 
     await waitFor(() => expect(deleteCalled).toBe(true));
   });
+
+  test('「有効に戻す」をクリックすると有効化APIが呼ばれる', async () => {
+    let activateCalled = false;
+    server.use(
+      http.get('/api/offices', () => HttpResponse.json([inactiveOffice])),
+      http.patch('/api/offices/:id/activate', () => {
+        activateCalled = true;
+        return HttpResponse.json({ ...inactiveOffice, isActive: true });
+      })
+    );
+
+    const { user } = renderOfficeList();
+    await user.click(await screen.findByRole('button', { name: '有効に戻す' }));
+
+    await waitFor(() => expect(activateCalled).toBe(true));
+  });
+
+  test('「新規登録」をクリックすると登録画面へ遷移する', async () => {
+    server.use(http.get('/api/offices', () => HttpResponse.json([officeA])));
+
+    const { user } = renderOfficeList();
+    await user.click(await screen.findByRole('button', { name: '➕ 新規登録' }));
+
+    await waitFor(() => expect(screen.getByText('事業所登録画面')).toBeInTheDocument());
+  });
+
+  test('「編集」をクリックすると編集画面へ遷移する', async () => {
+    server.use(http.get('/api/offices', () => HttpResponse.json([officeA])));
+
+    const { user } = renderOfficeList();
+    const item = await screen.findByText(officeA.name).then(el => el.closest('li'));
+    await user.click(within(item!).getByRole('button', { name: '編集' }));
+
+    await waitFor(() => expect(screen.getByText('事業所編集画面')).toBeInTheDocument());
+  });
+
+  test('0件の場合「該当する事業所がありません」と表示される', async () => {
+    server.use(http.get('/api/offices', () => HttpResponse.json([])));
+
+    renderOfficeList();
+
+    expect(await screen.findByText('該当する事業所がありません')).toBeInTheDocument();
+  });
+
+  test('データ取得に失敗した場合エラーメッセージと再読み込みボタンが表示される', async () => {
+    server.use(http.get('/api/offices', () => HttpResponse.json({ message: 'error' }, { status: 500 })));
+
+    renderOfficeList();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('データの取得に失敗しました');
+    expect(screen.getByRole('button', { name: '再読み込み' })).toBeInTheDocument();
+  });
 });

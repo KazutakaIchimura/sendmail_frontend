@@ -7,7 +7,7 @@ export const getStaffs = (params?: { includeInactive?: boolean }) =>
 export const getRoles = () =>
   client.get<RoleOption[]>('/roles').then(r => r.data);
 
-export const createStaff = (data: Omit<Staff, 'id' | 'isActive' | 'forcePasswordChange' | 'createdAt' | 'roleId'> & { password?: string }) =>
+export const createStaff = (data: Omit<Staff, 'id' | 'isActive' | 'forcePasswordChange' | 'createdAt' | 'roleId' | 'accessibilitySettings'> & { password?: string }) =>
   client.post<Staff>('/staffs', data).then(r => r.data);
 
 /**

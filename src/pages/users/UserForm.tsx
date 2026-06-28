@@ -66,7 +66,7 @@ export const UserForm = () => {
               recipientNumber: data.recipientNumber || null,
               disabilitySupportCategory: data.disabilitySupportCategory ?? null,
               ...(data.birthDate ? { birthDate: data.birthDate } : {}),
-              assignedStaffId: isAdmin ? (data.assignedStaffId ?? null) : undefined,
+              assignedStaffId: isAdmin ? (data.assignedStaffId ?? null) : null,
             },
           })
         : createUser({
@@ -76,7 +76,7 @@ export const UserForm = () => {
             notes: data.notes || null,
             recipientNumber: data.recipientNumber || null,
             disabilitySupportCategory: data.disabilitySupportCategory ?? null,
-            assignedStaffId: isAdmin ? (data.assignedStaffId ?? null) : undefined,
+            assignedStaffId: isAdmin ? (data.assignedStaffId ?? null) : null,
           }),
     onSuccess: async (saved) => {
       // 遷移先の一覧/詳細画面はこの時点でまだマウントされておらずアクティブな観測者がいないため、

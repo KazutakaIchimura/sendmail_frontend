@@ -12,6 +12,7 @@ export const adminStaff: Staff = {
   roleId: 1,
   isActive: true,
   forcePasswordChange: false,
+  accessibilitySettings: null,
   createdAt: '2026-01-01T00:00:00Z',
 };
 
@@ -23,6 +24,7 @@ export const staffMember: Staff = {
   roleId: 2,
   isActive: true,
   forcePasswordChange: false,
+  accessibilitySettings: null,
   createdAt: '2026-01-02T00:00:00Z',
 };
 
@@ -34,6 +36,7 @@ export const inactiveStaff: Staff = {
   roleId: 2,
   isActive: false,
   forcePasswordChange: false,
+  accessibilitySettings: null,
   createdAt: '2026-01-03T00:00:00Z',
 };
 
@@ -93,7 +96,11 @@ export const userTanaka: User = {
   nameKana: 'たなか たろう',
   birthDate: '1985-04-01',
   notes: null,
+  recipientNumber: null,
+  disabilitySupportCategory: null,
   isActive: true,
+  assignedStaffId: null,
+  assignedStaffName: null,
   createdAt: '2026-01-10T00:00:00Z',
   updatedAt: '2026-01-10T00:00:00Z',
 };
@@ -104,7 +111,11 @@ export const userYamada: User = {
   nameKana: 'やまだ はなこ',
   birthDate: '1990-06-15',
   notes: null,
+  recipientNumber: null,
+  disabilitySupportCategory: null,
   isActive: true,
+  assignedStaffId: null,
+  assignedStaffName: null,
   createdAt: '2026-01-11T00:00:00Z',
   updatedAt: '2026-01-11T00:00:00Z',
 };
@@ -115,7 +126,11 @@ export const inactiveUser: User = {
   nameKana: 'さとう じろう',
   birthDate: null,
   notes: null,
+  recipientNumber: null,
+  disabilitySupportCategory: null,
   isActive: false,
+  assignedStaffId: null,
+  assignedStaffName: null,
   createdAt: '2026-01-12T00:00:00Z',
   updatedAt: '2026-01-12T00:00:00Z',
 };

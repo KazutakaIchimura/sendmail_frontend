@@ -21,7 +21,7 @@ export const StaffListPage = () => {
   const queryClient = useQueryClient();
   const [disablingStaff, setDisablingStaff] = useState<Staff | null>(null);
 
-  const { data: staffs = [], isLoading } = useQuery({
+  const { data: staffs = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['staffs'],
     queryFn: () => getStaffs({ includeInactive: true }),
   });
@@ -61,6 +61,14 @@ export const StaffListPage = () => {
       </div>
 
       {isLoading && <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>}
+      {isError && (
+        <div className="flex items-center gap-3">
+          <p className="text-std-14N-130 text-red-600" role="alert">データの取得に失敗しました</p>
+          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
+            {isFetching ? '再読み込み中...' : '再読み込み'}
+          </Button>
+        </div>
+      )}
 
       <ul className="flex flex-col gap-2">
         {staffs.map(s => (

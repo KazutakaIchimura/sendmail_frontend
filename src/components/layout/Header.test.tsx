@@ -32,6 +32,18 @@ describe('Header', () => {
     expect(screen.queryByRole('link', { name: 'スタッフ管理' })).not.toBeInTheDocument();
   });
 
+  test('アクセシビリティ設定ボタンをクリックするとパネルが開く', async () => {
+    server.use(http.get('/api/auth/me', () => HttpResponse.json(adminStaff)));
+
+    const user = userEvent.setup();
+    renderWithProviders(<Header />, { withAuth: true });
+
+    await waitFor(() => expect(screen.getByText(adminStaff.name)).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'つかいやすさの設定をひらく' }));
+
+    expect(await screen.findByRole('dialog', { name: 'つかいやすさの設定' })).toBeInTheDocument();
+  });
+
   test('「ログアウト」をクリックすると /login へ遷移する', async () => {
     server.use(
       http.get('/api/auth/me', () => HttpResponse.json(adminStaff)),

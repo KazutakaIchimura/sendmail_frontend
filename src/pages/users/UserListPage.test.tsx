@@ -116,6 +116,30 @@ describe('UserListPage', () => {
     expect(screen.queryByText('すべて表示（無効含む）')).not.toBeInTheDocument();
   });
 
+  test('「有効に戻す」をクリックすると有効化APIが呼ばれる', async () => {
+    let activateCalled = false;
+    server.use(
+      http.get('/api/users', () => HttpResponse.json([inactiveUser])),
+      http.patch('/api/users/:id/activate', () => {
+        activateCalled = true;
+        return HttpResponse.json({ ...inactiveUser, isActive: true });
+      })
+    );
+
+    const { user } = renderUserList();
+    await user.click(await screen.findByRole('button', { name: '有効に戻す' }));
+
+    await waitFor(() => expect(activateCalled).toBe(true));
+  });
+
+  test('データ取得に失敗した場合エラーメッセージが表示される', async () => {
+    server.use(http.get('/api/users', () => HttpResponse.json({ message: 'error' }, { status: 500 })));
+
+    renderUserList();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('利用者一覧の取得に失敗しました');
+  });
+
   test('ADMINが「すべて表示」を選択すると無効な利用者も含めて取得される', async () => {
     server.use(
       http.get('/api/users', ({ request }) => {

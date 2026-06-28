@@ -5,19 +5,25 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, userEvent, createTestQueryClient } from '@/test/test-utils';
 import { server } from '@/test/server';
 import { userTanaka, userTanakaWithOffices } from '@/test/fixtures';
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { UserForm } from './UserForm';
 
 const renderUserForm = (initialPath: string) => {
   const client = createTestQueryClient();
   const utils = render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <Routes>
-          <Route path="/users/new" element={<UserForm />} />
-          <Route path="/users/:id/edit" element={<UserForm />} />
-          <Route path="/users/:id" element={<p>利用者詳細画面</p>} />
-        </Routes>
-      </MemoryRouter>
+      <AccessibilityProvider>
+        <AuthProvider>
+          <MemoryRouter initialEntries={[initialPath]}>
+            <Routes>
+              <Route path="/users/new" element={<UserForm />} />
+              <Route path="/users/:id/edit" element={<UserForm />} />
+              <Route path="/users/:id" element={<p>利用者詳細画面</p>} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </AccessibilityProvider>
     </QueryClientProvider>
   );
   return { ...utils, user: userEvent.setup() };
@@ -41,6 +47,38 @@ describe('UserForm（新規登録）', () => {
     await user.click(screen.getByRole('button', { name: '登録する' }));
 
     await waitFor(() => expect(screen.getByText('利用者詳細画面')).toBeInTheDocument());
+  });
+
+  test('登録に失敗するとエラーメッセージが表示される', async () => {
+    server.use(http.post('/api/users', () => new HttpResponse(null, { status: 500 })));
+
+    const { user } = renderUserForm('/users/new');
+    await user.type(await screen.findByLabelText(/^氏名/), '田中 太郎');
+    await user.click(screen.getByRole('button', { name: '登録する' }));
+
+    expect(await screen.findByText('しばらく待ってからもう一度お試しください')).toBeInTheDocument();
+  });
+
+  test('「キャンセル」をクリックすると前の画面に戻る', async () => {
+    const client = createTestQueryClient();
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider client={client}>
+        <AccessibilityProvider>
+          <AuthProvider>
+            <MemoryRouter initialEntries={['/users', '/users/new']} initialIndex={1}>
+              <Routes>
+                <Route path="/users/new" element={<UserForm />} />
+                <Route path="/users" element={<p>利用者一覧画面</p>} />
+              </Routes>
+            </MemoryRouter>
+          </AuthProvider>
+        </AccessibilityProvider>
+      </QueryClientProvider>
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'キャンセル' }));
+    await waitFor(() => expect(screen.getByText('利用者一覧画面')).toBeInTheDocument());
   });
 });
 

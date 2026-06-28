@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, userEvent, createTestQueryClient } from '@/test/test-utils';
+import { render, screen, waitFor, fireEvent, userEvent, createTestQueryClient } from '@/test/test-utils';
 import { server } from '@/test/server';
 import { mailSendPending } from '@/test/fixtures';
 import { BatchSendModal } from './BatchSendModal';
@@ -31,7 +31,7 @@ describe('BatchSendModal', () => {
 
     const { user } = renderModal();
 
-    await user.type(screen.getByLabelText('メモ（任意）'), 'a'.repeat(501));
+    fireEvent.change(screen.getByLabelText('メモ（任意）'), { target: { value: 'a'.repeat(501) } });
     await user.click(screen.getByRole('button', { name: '送付済みにする' }));
 
     expect(await screen.findByText('メモは500文字以内で入力してください')).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('BatchSendModal', () => {
 
     const { user, onSuccess } = renderModal();
 
-    await user.type(screen.getByLabelText('メモ（任意）'), '郵送完了');
+    fireEvent.change(screen.getByLabelText('メモ（任意）'), { target: { value: '郵送完了' } });
     await user.click(screen.getByRole('button', { name: '送付済みにする' }));
 
     await waitFor(() => expect(requestBody).toEqual({ mailSendIds: [mailSendPending.id], notes: '郵送完了' }));
@@ -62,5 +62,24 @@ describe('BatchSendModal', () => {
     await user.click(screen.getByRole('button', { name: '送付済みにする' }));
 
     expect(await screen.findByText('しばらく待ってからもう一度お試しください')).toBeInTheDocument();
+  });
+
+  test('キャンセルボタンをクリックするとonCloseが呼ばれる', async () => {
+    const { user, onClose } = renderModal();
+
+    await user.click(screen.getByRole('button', { name: 'キャンセル' }));
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  test('API送信中は「処理中...」と表示されボタンが無効になる', async () => {
+    server.use(http.post('/api/mail-send-batches', async () => {
+      await new Promise<never>(() => {});
+    }));
+
+    const { user } = renderModal();
+    await user.click(screen.getByRole('button', { name: '送付済みにする' }));
+
+    expect(await screen.findByRole('button', { name: '処理中...' })).toBeDisabled();
   });
 });

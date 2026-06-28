@@ -19,7 +19,7 @@ export const OfficeListPage = () => {
   // 無効も含めて返すgetAllOffices()のキャッシュが衝突しないよう、別キーにしている。
   // invalidateQueries({queryKey:['offices']})はprefixマッチでこちらも対象に含むため、
   // 他画面からの無効化は引き続き効く。
-  const { data: offices = [], isLoading } = useQuery({
+  const { data: offices = [], isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['offices', 'all'],
     queryFn: getAllOffices,
   });
@@ -53,6 +53,14 @@ export const OfficeListPage = () => {
       <SearchInput placeholder="事業所名で検索..." value={search} onChange={setSearch} />
 
       {isLoading && <p className="text-std-14N-130 text-solid-gray-500">読み込み中...</p>}
+      {isError && (
+        <div className="flex items-center gap-3">
+          <p className="text-std-14N-130 text-red-600" role="alert">データの取得に失敗しました</p>
+          <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
+            {isFetching ? '再読み込み中...' : '再読み込み'}
+          </Button>
+        </div>
+      )}
 
       <ul className="flex flex-col gap-2">
         {filtered.map(o => (

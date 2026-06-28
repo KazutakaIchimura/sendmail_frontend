@@ -35,7 +35,7 @@ export const OfficeForm = () => {
   useEffect(() => {
     if (office) reset({
       name: office.name,
-      officeType: office.officeType ?? '',
+      officeType: (office.officeType ?? '') as OfficeFormType['officeType'],
       postalCode: office.postalCode ?? '',
       address: office.address ?? '',
       building: office.building ?? '',

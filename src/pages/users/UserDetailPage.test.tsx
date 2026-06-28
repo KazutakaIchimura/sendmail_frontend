@@ -135,4 +135,28 @@ describe('UserDetailPage', () => {
     expect(screen.getByText(mailSendPending.officeName)).toBeInTheDocument();
     expect(screen.getByText('計画作成')).toBeInTheDocument();
   });
+
+  test('送付履歴が0件の場合「送付履歴がありません」と表示される', async () => {
+    server.use(
+      http.get('/api/users/:id', () => HttpResponse.json(userTanakaWithOffices)),
+      http.get('/api/mail-sends', () => HttpResponse.json([]))
+    );
+
+    renderUserDetail();
+
+    expect(await screen.findByText('送付履歴がありません')).toBeInTheDocument();
+  });
+
+  test('「← 戻る」をクリックすると利用者一覧へ遷移する', async () => {
+    server.use(
+      http.get('/api/users/:id', () => HttpResponse.json(userTanakaWithOffices)),
+      http.get('/api/mail-sends', () => HttpResponse.json([]))
+    );
+
+    const { user } = renderUserDetail();
+    await screen.findByText('【基本情報】');
+    await user.click(screen.getByRole('button', { name: '← 戻る' }));
+
+    await waitFor(() => expect(screen.getByText('利用者一覧画面')).toBeInTheDocument());
+  });
 });

@@ -61,7 +61,7 @@ describe('OfficeForm（新規登録）', () => {
     await user.click(screen.getByRole('button', { name: '登録する' }));
 
     await waitFor(() => expect(screen.getByText('事業所一覧画面')).toBeInTheDocument());
-    expect(sentBody?.officeType).toBe('就労継続支援A型');
+    expect((sentBody as Record<string, unknown> | null)?.['officeType']).toBe('就労継続支援A型');
   });
 
   test('事業所種別を選択しない場合は null として POST される', async () => {
@@ -79,7 +79,17 @@ describe('OfficeForm（新規登録）', () => {
     await user.click(screen.getByRole('button', { name: '登録する' }));
 
     await waitFor(() => expect(screen.getByText('事業所一覧画面')).toBeInTheDocument());
-    expect(sentBody?.officeType).toBeNull();
+    expect((sentBody as Record<string, unknown> | null)?.['officeType']).toBeNull();
+  });
+
+  test('登録に失敗するとエラーメッセージが表示される', async () => {
+    server.use(http.post('/api/offices', () => new HttpResponse(null, { status: 500 })));
+
+    const { user } = renderOfficeForm('/offices/new');
+    await user.type(await screen.findByLabelText(/^事業所名/), '新事業所');
+    await user.click(screen.getByRole('button', { name: '登録する' }));
+
+    expect(await screen.findByText('しばらく待ってからもう一度お試しください')).toBeInTheDocument();
   });
 });
 
@@ -93,5 +103,18 @@ describe('OfficeForm（編集）', () => {
     expect(screen.getByLabelText(/^郵便番号/)).toHaveValue(officeA.postalCode);
     expect(screen.getByLabelText(/^住所/)).toHaveValue(officeA.address);
     expect(screen.getByLabelText(/^事業所種別/)).toHaveValue(officeA.officeType);
+  });
+
+  test('編集に成功すると一覧画面へ遷移する', async () => {
+    server.use(
+      http.get('/api/offices/:id', () => HttpResponse.json(officeA)),
+      http.put('/api/offices/:id', () => HttpResponse.json(officeA))
+    );
+
+    const { user } = renderOfficeForm(`/offices/${officeA.id}/edit`);
+    await waitFor(() => expect(screen.getByLabelText(/^事業所名/)).toHaveValue(officeA.name));
+    await user.click(screen.getByRole('button', { name: '保存する' }));
+
+    await waitFor(() => expect(screen.getByText('事業所一覧画面')).toBeInTheDocument());
   });
 });

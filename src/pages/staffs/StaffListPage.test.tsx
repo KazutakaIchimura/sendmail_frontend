@@ -126,6 +126,15 @@ describe('StaffListPage', () => {
     await waitFor(() => expect(screen.getByText('スタッフ登録画面')).toBeInTheDocument());
   });
 
+  test('データ取得に失敗した場合エラーメッセージと再読み込みボタンが表示される', async () => {
+    server.use(http.get('/api/staffs', () => HttpResponse.json({ message: 'error' }, { status: 500 })));
+
+    renderStaffList();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('データの取得に失敗しました');
+    expect(screen.getByRole('button', { name: '再読み込み' })).toBeInTheDocument();
+  });
+
   test('「編集」ボタンをクリックすると編集画面へ遷移する', async () => {
     server.use(http.get('/api/staffs', () => HttpResponse.json([adminStaff, staffMember])));
 
